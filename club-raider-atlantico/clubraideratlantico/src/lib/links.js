@@ -1,9 +1,3 @@
-/**
- * Social & contact links — Club Raider Atlántico
- * Fuente: https://heylink.me/clubraideratl/
- * 
- * Añade o modifica aquí sin tocar los componentes.
- */
 
 export const SOCIAL_LINKS = [
   {
@@ -19,18 +13,18 @@ export const SOCIAL_LINKS = [
   {
     id: 'registro',
     label: 'Formulario de Registro',
-    sublabel: 'Regístrate como socio',
+    sublabel: 'Regístrate como miembro del club',
     url: 'https://docs.google.com/forms/d/e/1FAIpQLSdd-B4Vl3ADs4Gz2lKGhuyCiQEe_DEsM0CoQmUqkOubuUK7rg/viewform?usp=header',
     icon: 'form',
-    color: '#CC2222',
+    color: '#9801fd',
     priority: 2,
     cta: true,
   },
   {
     id: 'instagram',
     label: 'Instagram',
-    sublabel: '@clubraideratl',
-    url: 'https://instagram.com/clubraideratl',
+    sublabel: '@clubraideratlantico',
+    url: 'https://www.instagram.com/clubraideratlantico?igsh=MWJzbHZ4ZTk5emF2NQ%3D%3D&utm_source=qr',
     icon: 'instagram',
     color: '#E1306C',
     priority: 3,
@@ -38,8 +32,8 @@ export const SOCIAL_LINKS = [
   {
     id: 'tiktok',
     label: 'TikTok',
-    sublabel: '@club.raider.atl',
-    url: 'https://www.tiktok.com/@club.raider.atl',
+    sublabel: '@clubraideratlantico',
+    url: 'https://www.tiktok.com/@clubraideratlantico?_r=1&_t=ZS-95QiNuwLYBc',
     icon: 'tiktok',
     color: '#ffffff',
     priority: 4,
@@ -48,7 +42,7 @@ export const SOCIAL_LINKS = [
     id: 'facebook',
     label: 'Facebook',
     sublabel: 'Club Raider Atlántico',
-    url: 'https://www.facebook.com/share/1PXLn8kZVq/',
+    url: 'https://www.facebook.com/share/18FUv6RLrm/?mibextid=wwXIfr',
     icon: 'facebook',
     color: '#1877F2',
     priority: 5,
@@ -57,9 +51,9 @@ export const SOCIAL_LINKS = [
 
 export const CLUB_INFO = {
   name: 'Club Raider Atlántico',
-  tagline: 'Hermandad en la Pista',
-  location: 'Caribe Colombiano',
+  tagline: 'Primer Club Raider en Colombia',
+  location: 'Atlantico, Colombia',
   brand: 'TVS Raider',
-  email: 'contacto@clubraideratlantico.com',
+  email: 'admin@clubraideratlantico.com',
   website: 'https://clubraideratlantico.com',
 }

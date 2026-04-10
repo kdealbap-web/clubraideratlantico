@@ -2,6 +2,7 @@ import { Box, Typography, LinearProgress } from '@mui/material'
 import { motion, useAnimationFrame } from 'framer-motion'
 import { useRef, useState } from 'react'
 import { COLORS, FONTS } from '@styles/theme'
+import motoImg from '@assets/tvs-raider.png'
 
 // Animated road dashes
 function RoadDash({ delay }) {
@@ -31,54 +32,79 @@ function RoadDash({ delay }) {
 
 // Animated motorcycle SVG
 function MotoBike() {
+  // h=80px | rines medidos con Python desde imagen 500x333
+  // Trasero:   elipse left=32 top=36 w=9  h=16
+  // Delantero: elipse left=70 top=41 w=17 h=20
+  // bottom=-18px compensa el espacio negro bajo la moto en la imagen
   return (
-    <motion.div
-      animate={{ x: ['-2px', '2px', '-2px'], y: [0, '-2px', 0] }}
-      transition={{ duration: 0.4, repeat: Infinity, ease: 'easeInOut' }}
-      style={{ display: 'inline-block' }}
-    >
-      <svg width="64" height="40" viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Rear wheel */}
-        <circle cx="12" cy="30" r="9" stroke={COLORS.muted} strokeWidth="2.5" fill="none"/>
-        <circle cx="12" cy="30" r="3" fill={COLORS.muted}/>
-        {/* Front wheel */}
-        <circle cx="52" cy="30" r="9" stroke={COLORS.muted} strokeWidth="2.5" fill="none"/>
-        <circle cx="52" cy="30" r="3" fill={COLORS.muted}/>
-        {/* Frame */}
-        <path d="M12 30 L24 16 L38 16 L52 30" stroke={COLORS.light} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <path d="M24 16 L32 8 L44 14 L52 30" stroke={COLORS.white} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        {/* Engine/body */}
-        <path d="M26 20 L38 20 L36 28 L20 28 Z" fill={COLORS.dark3} stroke={COLORS.border} strokeWidth="1"/>
-        {/* Fairing accent */}
-        <path d="M32 8 L44 14 L42 18 L36 16 Z" fill={COLORS.red} opacity="0.9"/>
-        {/* Handlebar */}
-        <line x1="44" y1="14" x2="48" y2="10" stroke={COLORS.light} strokeWidth="2" strokeLinecap="round"/>
-        {/* Rider silhouette */}
-        <ellipse cx="32" cy="12" rx="5" ry="5" fill={COLORS.dark2} stroke={COLORS.border} strokeWidth="1"/>
-        <path d="M28 16 L36 16 L34 22 L30 22 Z" fill={COLORS.dark2}/>
-        {/* Exhaust */}
-        <motion.path
-          d="M20 26 Q14 24 10 22"
-          stroke={COLORS.muted}
-          strokeWidth="1.5"
-          fill="none"
-          strokeLinecap="round"
-          animate={{ opacity: [0.8, 0.2, 0.8], pathLength: [1, 0.3, 1] }}
-          transition={{ duration: 0.5, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        {/* Speed lines */}
-        <motion.g
-          animate={{ x: [0, -8], opacity: [0.7, 0] }}
-          transition={{ duration: 0.3, repeat: Infinity, ease: 'linear' }}
-        >
-          <line x1="4" y1="18" x2="14" y2="18" stroke={COLORS.red} strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
-          <line x1="2" y1="22" x2="10" y2="22" stroke={COLORS.red} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
-        </motion.g>
-      </svg>
-    </motion.div>
+    <Box sx={{ position: 'relative', flexShrink: 0 }}>
+      <style>{`
+        @keyframes moto-drive {
+          from { left: -420px; }
+          to   { left: calc(100% + 220px); }
+        }
+        @keyframes moto-bounce {
+          from { transform: translateY(0px) rotate(-0.2deg); }
+          to   { transform: translateY(-2px) rotate(0.2deg); }
+        }
+        @keyframes wspin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes led-blink {
+          from { opacity: 0.6; transform: scale(1); }
+          to   { opacity: 1;   transform: scale(1.5); }
+        }
+      `}</style>
+
+      <Box sx={{
+        position: 'absolute',
+        bottom: '-40px',              // ← compensa espacio negro debajo
+        animation: 'moto-drive 7.4s linear infinite',
+      }}>
+        <Box sx={{ position: 'relative', animation: 'moto-bounce 0.44s ease-in-out infinite alternate' }}>
+
+          {/* Rin trasero — elipse pequeña */}
+          <Box sx={{
+            position: 'absolute', left: '32px', top: '36px',
+            width: '14px', height: '14px', borderRadius: '50%',
+            animation: 'wspin 0.35s linear infinite',
+            boxShadow: '0 0 0 1.5px rgba(220,30,30,0.95), 0 0 6px rgba(255,30,30,0.5)',
+          }}/>
+
+          {/* Rin delantero — elipse más grande */}
+          <Box sx={{
+            position: 'absolute', left: '70px', top: '41px',
+            width: '17px', height: '20px', borderRadius: '50%',
+            animation: 'wspin 0.35s linear infinite',
+            boxShadow: '0 0 0 1.5px rgba(220,30,30,0.95), 0 0 6px rgba(255,30,30,0.5)',
+          }}/>
+
+
+{/* Faro LED */}
+<Box sx={{
+  position: 'absolute', left: '76px', top: '25px',
+  width: '3px', height: '3px', background: '#fff',
+  borderRadius: '50%', filter: 'blur(2px)',
+  animation: 'led-blink 0.65s ease-in-out infinite alternate',
+  boxShadow: '0 0 4px rgba(255,255,255,0.8)',
+}}/>
+          <Box
+            component="img"
+            src={motoImg}
+            alt="TVS Raider"
+            sx={{
+              height: 80,
+              width: 'auto',
+              display: 'block',
+              filter: 'drop-shadow(0 0 8px rgba(255,35,35,0.4))',
+            }}
+          />
+        </Box>
+      </Box>
+    </Box>
   )
 }
-
 const PHASES = [
   { label: 'Fase 0', name: 'Landing & Identidad', done: true },
   { label: 'Fase 1', name: 'Registro de Socios', done: false },
@@ -159,7 +185,7 @@ export default function ComingSoon() {
               mb: 4,
               display: 'flex',
               alignItems: 'center',
-              px: 3,
+              px: 6,
             }}
           >
             {/* Road stripes */}
@@ -172,18 +198,7 @@ export default function ComingSoon() {
             {/* Moto */}
             <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
               <MotoBike />
-              <Typography
-                sx={{
-                  fontFamily: FONTS.condensed,
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  letterSpacing: '0.2em',
-                  textTransform: 'uppercase',
-                  color: COLORS.light,
-                }}
-              >
-                Construyendo a toda marcha
-              </Typography>
+
             </Box>
 
             {/* Progress bar overlay */}
