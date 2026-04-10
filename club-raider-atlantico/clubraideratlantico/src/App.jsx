@@ -11,8 +11,9 @@ export default function App() {
       <CssBaseline />
       <Layout>
         <Hero />
-        <ComingSoon />
         <SocialLinks />
+        <ComingSoon />
+
       </Layout>
     </ThemeProvider>
   )

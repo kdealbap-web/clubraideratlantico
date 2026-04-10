@@ -154,8 +154,54 @@ export default function SocialLinks() {
               mb: 1,
             }}
           >
-            Comunidad
           </Typography>
+          {/* Nuevo texto: Familia Motera / Comunidad */}
+        <Typography
+          sx={{
+            fontFamily: FONTS.condensed,
+            fontSize: { xs: '11px', sm: '13px' },
+            fontWeight: 500,
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: COLORS.white,
+            mb: 2, // Bajamos un poco el margen para el bloque de texto largo
+            opacity: 0.9,
+          }}
+        >
+          Únete a la familia motera — Comunidad raider
+        </Typography>
+
+        {/* Bloque de Información de Seguridad (Texto de la imagen) */}
+        <Box 
+          sx={{ 
+            maxWidth: 500, 
+            mx: 'auto', 
+            mb: 4, 
+            px: 2 
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: FONTS.condensed,
+              fontSize: { xs: '10px', sm: '11px' },
+              lineHeight: 1.6,
+              letterSpacing: '0.05em',
+              textAlign: 'center',
+              color: COLORS.muted, // Usamos muted para que sea informativo y no distraiga
+              textTransform: 'uppercase',
+            }}
+          >
+            Queremos informarte que por medio de este formulario podemos brindarte ayuda en caso de 
+            emergencia o accidente. Es de vital importancia que te registres en nuestra base de datos 
+            para contar con una <Box component="span" sx={{ color: COLORS.white }}>red de apoyo al instante</Box> ante cualquier 
+            siniestro vial y gozar de beneficios con marcas aliadas.
+            <br />
+            <Box component="span" sx={{ fontSize: '9px', opacity: 0.6, mt: 1, display: 'block' }}>
+              Sin mucho más que agregar...
+            </Box>
+          </Typography>
+        </Box>
+
           <Typography
             component="h2"
             sx={{
@@ -195,7 +241,6 @@ export default function SocialLinks() {
               letterSpacing: '0.1em',
             }}
           >
-            Caribe Colombiano · TVS Raider
           </Typography>
         </motion.div>
       </Box>

@@ -125,8 +125,7 @@ export default function Hero() {
               mb: 1,
             }}
           >
-            TVS Raider · Caribe Colombiano
-          </Typography>
+1ER CLUB RAIDER EN COLOMBIA          </Typography>
         </motion.div>
 
         {/* Main title */}
@@ -165,6 +164,8 @@ export default function Hero() {
             }}
           >
             Club Raider Atlántico
+
+            
           </Typography>
         </motion.div>
 
