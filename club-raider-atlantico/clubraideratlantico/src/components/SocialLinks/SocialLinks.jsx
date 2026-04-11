@@ -156,65 +156,50 @@ export default function SocialLinks() {
           >
           </Typography>
           {/* Nuevo texto: Familia Motera / Comunidad */}
-        <Typography
-          sx={{
-            fontFamily: FONTS.condensed,
-            fontSize: { xs: '11px', sm: '13px' },
-            fontWeight: 500,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: COLORS.white,
-            mb: 2, // Bajamos un poco el margen para el bloque de texto largo
-            opacity: 0.9,
-          }}
-        >
-          Únete a la familia motera — Comunidad raider
-        </Typography>
+
 
         {/* Bloque de Información de Seguridad (Texto de la imagen) */}
-        <Box 
-          sx={{ 
-            maxWidth: 500, 
-            mx: 'auto', 
-            mb: 4, 
-            px: 2 
-          }}
-        >
-          <Typography
-            sx={{
-              fontFamily: FONTS.condensed,
-              fontSize: { xs: '10px', sm: '11px' },
-              lineHeight: 1.6,
-              letterSpacing: '0.05em',
-              textAlign: 'center',
-              color: COLORS.muted, // Usamos muted para que sea informativo y no distraiga
-              textTransform: 'uppercase',
-            }}
-          >
-            Queremos informarte que por medio de este formulario podemos brindarte ayuda en caso de 
-            emergencia o accidente. Es de vital importancia que te registres en nuestra base de datos 
-            para contar con una <Box component="span" sx={{ color: COLORS.white }}>red de apoyo al instante</Box> ante cualquier 
-            siniestro vial y gozar de beneficios con marcas aliadas.
-            <br />
-            <Box component="span" sx={{ fontSize: '9px', opacity: 0.6, mt: 1, display: 'block' }}>
-              Sin mucho más que agregar...
-            </Box>
-          </Typography>
-        </Box>
+ <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', maxWidth: '600px', mx: 'auto' }}>
+  
+  <Typography
+    sx={{
+      fontFamily: FONTS.condensed,
+      fontSize: { xs: '11px', sm: '13px' }, // Subí un poco el tamaño para legibilidad
+      lineHeight: 1.6,
+      letterSpacing: '0.05em',
+      textAlign: 'center', // Mantenemos center para evitar espacios raros del 'justify'
+      textBalance: 'balance', // Atributo clave para que las líneas se corten de forma armónica
+      color: COLORS.muted,
+      textTransform: 'uppercase',
+      mb: 3, // Espaciado inferior para separar del H2
+    }}
+  >
+    Queremos informarte que por medio de este formulario podemos brindarte ayuda en caso de 
+    emergencia o accidente. Es de vital importancia que te registres en nuestra base de datos 
+    para contar con una <Box component="span" sx={{ color: COLORS.white, fontWeight: 'bold' }}>red de apoyo al instante</Box> ante cualquier 
+    siniestro vial y gozar de beneficios con marcas aliadas.
+    
+    <Box component="span" sx={{ fontSize: '9px', opacity: 0.6, mt: 1.5, display: 'block', fontStyle: 'italic' }}>
+      Sin mucho más que agregar...
+    </Box>
+  </Typography>
 
-          <Typography
-            component="h2"
-            sx={{
-              fontFamily: FONTS.display,
-              fontSize: { xs: '36px', sm: '48px' },
-              letterSpacing: '0.04em',
-              color: COLORS.white,
-              lineHeight: 1,
-              mb: 4,
-            }}
-          >
-            ÚNETE A LA <Box component="span" sx={{ color: COLORS.red }}>HERMANDAD</Box>
-          </Typography>
+  <Typography
+    component="h2"
+    sx={{
+      fontFamily: FONTS.display,
+      fontSize: { xs: '32px', sm: '48px' }, // Ajuste leve para móviles
+      letterSpacing: '0.04em',
+      color: COLORS.white,
+      lineHeight: 1.1,
+      textAlign: 'center',
+      mb: 4,
+    }}
+  >
+    ÚNETE A LA <Box component="span" sx={{ color: COLORS.red }}>HERMANDAD RAIDER ATLANTICO</Box>
+  </Typography>
+
+</Box>
         </motion.div>
 
         {/* Links list */}

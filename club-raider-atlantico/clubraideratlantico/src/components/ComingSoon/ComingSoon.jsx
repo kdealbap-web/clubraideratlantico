@@ -74,8 +74,8 @@ function MotoBike() {
 
           {/* Rin delantero — elipse más grande */}
           <Box sx={{
-            position: 'absolute', left: '70px', top: '41px',
-            width: '17px', height: '20px', borderRadius: '50%',
+            position: 'absolute', left: '70px', top: '44px',
+            width: '17px', height: '17px', borderRadius: '50%',
             animation: 'wspin 0.35s linear infinite',
             boxShadow: '0 0 0 1.5px rgba(220,30,30,0.95), 0 0 6px rgba(255,30,30,0.5)',
           }}/>
