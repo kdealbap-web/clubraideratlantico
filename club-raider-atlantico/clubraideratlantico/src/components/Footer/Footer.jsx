@@ -53,7 +53,7 @@ export default function Footer() {
     <Typography sx={{ fontSize: '11px', color: COLORS.muted, fontFamily: FONTS.condensed, letterSpacing: '0.08em', mt: 0.5 }}>
       Diseñado y desarrollado por{' '}
       <Box component="span" sx={{ color: COLORS.light, fontWeight: 600 }}>Kevin De Alba & Alejo Villanueva</Box>
-      {' '}— Fullstack Dev Team · Barranquilla 🇨🇴
+      {' '}— Fullstack Dev Team · Club Raider Atlantico 🇨🇴
     </Typography>
   </Box>
 
