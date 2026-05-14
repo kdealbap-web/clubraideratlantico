@@ -16,8 +16,8 @@ interface AuthCtx {
   session: Session | null;
   user: User | null;
   member: Member | null;
-  signInMagic: (email: string, redirectTo?: string) => Promise<{ error: string | null }>;
   signInPassword: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUpPassword: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isEditor: boolean;
@@ -73,22 +73,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loadMember]);
 
-  const signInMagic = useCallback(
-    async (email: string, redirectTo?: string): Promise<{ error: string | null }> => {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectTo ?? `${window.location.origin}/admin`,
-        },
-      });
+  const signInPassword = useCallback(
+    async (email: string, password: string): Promise<{ error: string | null }> => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       return { error: error?.message ?? null };
     },
     [],
   );
 
-  const signInPassword = useCallback(
+  const signUpPassword = useCallback(
     async (email: string, password: string): Promise<{ error: string | null }> => {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/admin` },
+      });
       return { error: error?.message ?? null };
     },
     [],
@@ -106,13 +105,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       member,
-      signInMagic,
       signInPassword,
+      signUpPassword,
       signOut,
       isAdmin: rol ? ADMIN_ROLES.includes(rol) && member.estado === 'activo' : false,
       isEditor: rol ? EDITOR_ROLES.includes(rol) && member.estado === 'activo' : false,
     };
-  }, [loading, session, member, signInMagic, signInPassword, signOut]);
+  }, [loading, session, member, signInPassword, signUpPassword, signOut]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

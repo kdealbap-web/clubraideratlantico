@@ -5,15 +5,12 @@ import { PublicLayout } from '../../components/public/PublicLayout';
 import { CLUB, ROUTES } from '../../lib/constants';
 import { FieldShell, TextField } from '../../components/forms/Field';
 
-type Mode = 'password' | 'magic';
-
 export function LoginPage() {
-  const { signInMagic, signInPassword, user, isAdmin } = useAuth();
+  const { signInPassword, user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (user) {
@@ -47,7 +44,7 @@ export function LoginPage() {
     );
   }
 
-  const submitPassword = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
     setStatus('loading');
@@ -57,22 +54,7 @@ export function LoginPage() {
       setStatus('error');
       setErrorMsg(error);
     } else {
-      // Auth provider redirige por el useEffect cuando session llega
       setStatus('idle');
-    }
-  };
-
-  const submitMagic = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setStatus('loading');
-    setErrorMsg(null);
-    const { error } = await signInMagic(email);
-    if (error) {
-      setStatus('error');
-      setErrorMsg(error);
-    } else {
-      setStatus('sent');
     }
   };
 
@@ -86,169 +68,83 @@ export function LoginPage() {
         >
           Iniciar <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>sesión</span>.
         </h1>
-        <p style={{ color: 'var(--light)', marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
-          Si tienes contraseña del club, úsala. Si no, te mandamos un link mágico al email.
+        <p style={{ color: 'var(--light)', marginBottom: 28, fontSize: 14, lineHeight: 1.6 }}>
+          Ingresa con tu email y contraseña del club.
         </p>
+
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <FieldShell label="Email" required>
+            <TextField
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              autoComplete="email"
+            />
+          </FieldShell>
+          <FieldShell
+            label="Contraseña"
+            required
+            error={status === 'error' ? errorMsg ?? 'Error' : undefined}
+          >
+            <TextField
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••"
+              autoComplete="current-password"
+            />
+          </FieldShell>
+          <button type="submit" disabled={status === 'loading'} style={primaryBtn}>
+            {status === 'loading' ? 'Verificando…' : 'Iniciar sesión →'}
+          </button>
+        </form>
 
         <div
           style={{
-            display: 'flex',
-            gap: 0,
-            marginBottom: 22,
+            marginTop: 28,
+            padding: '16px 18px',
             border: '1px solid var(--borde)',
+            background: 'var(--dark-1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            fontSize: 13,
           }}
         >
-          <ModeBtn
-            active={mode === 'password'}
-            onClick={() => {
-              setMode('password');
-              setStatus('idle');
-              setErrorMsg(null);
+          <strong style={{ color: 'var(--blanco)' }}>¿Aprobado pero sin contraseña?</strong>
+          <p style={{ color: 'var(--light)', margin: 0, lineHeight: 1.5 }}>
+            Si el comité ya aprobó tu solicitud, crea tu contraseña con el mismo email que
+            registraste:
+          </p>
+          <Link
+            to={ROUTES.signup}
+            style={{
+              color: 'var(--rojo)',
+              fontFamily: 'var(--font-cond)',
+              fontSize: 12,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
             }}
           >
-            Contraseña
-          </ModeBtn>
-          <ModeBtn
-            active={mode === 'magic'}
-            onClick={() => {
-              setMode('magic');
-              setStatus('idle');
-              setErrorMsg(null);
-            }}
-          >
-            Magic link
-          </ModeBtn>
+            Crear contraseña →
+          </Link>
         </div>
 
-        {status === 'sent' && mode === 'magic' ? (
-          <div
-            role="status"
-            style={{
-              border: '1px solid var(--success)',
-              background: 'rgba(34,197,94,0.08)',
-              color: 'var(--blanco)',
-              padding: '20px 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div className="kicker" style={{ color: 'var(--success)' }}>· Email enviado</div>
-            <p style={{ margin: 0 }}>
-              Revisa tu bandeja en <strong>{email}</strong>. Si no llega en 2 minutos, mira spam o intenta
-              de nuevo.
-            </p>
-          </div>
-        ) : mode === 'password' ? (
-          <form onSubmit={submitPassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <FieldShell label="Email" required>
-              <TextField
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
-                autoComplete="email"
-              />
-            </FieldShell>
-            <FieldShell
-              label="Contraseña"
-              required
-              error={status === 'error' ? errorMsg ?? 'Error' : undefined}
-            >
-              <TextField
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••"
-                autoComplete="current-password"
-              />
-            </FieldShell>
-            <button type="submit" disabled={status === 'loading'} style={primaryBtn}>
-              {status === 'loading' ? 'Verificando…' : 'Iniciar sesión →'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('magic');
-                setStatus('idle');
-                setErrorMsg(null);
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--rojo)',
-                fontFamily: 'var(--font-cond)',
-                fontSize: 12,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                marginTop: 4,
-              }}
-            >
-              ¿Olvidaste tu contraseña? Usa magic link →
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={submitMagic} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <FieldShell label="Email" required error={status === 'error' ? errorMsg ?? 'Error' : undefined}>
-              <TextField
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
-                autoComplete="email"
-              />
-            </FieldShell>
-            <button type="submit" disabled={status === 'loading'} style={primaryBtn}>
-              {status === 'loading' ? 'Enviando…' : 'Enviar magic link →'}
-            </button>
-          </form>
-        )}
-
-        <div style={{ marginTop: 32, color: 'var(--muted)', fontSize: 12 }}>
+        <div style={{ marginTop: 24, color: 'var(--muted)', fontSize: 12, lineHeight: 1.6 }}>
           ¿No tienes cuenta? <Link to={ROUTES.unete} style={{ color: 'var(--rojo)' }}>Solicita tu ingreso</Link>.
-          Si tienes problemas, escríbenos a{' '}
+          <br />
+          ¿Olvidaste tu contraseña? Escríbele al admin a{' '}
           <a href={`mailto:${CLUB.emails.admin}`} style={{ color: 'var(--rojo)' }}>
             {CLUB.emails.admin}
-          </a>
-          .
+          </a>{' '}
+          para que la resetee.
         </div>
       </section>
     </PublicLayout>
-  );
-}
-
-function ModeBtn({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        flex: 1,
-        padding: '12px 16px',
-        background: active ? 'var(--rojo)' : 'transparent',
-        color: active ? 'var(--blanco)' : 'var(--light)',
-        border: 'none',
-        cursor: 'pointer',
-        fontFamily: 'var(--font-cond)',
-        fontSize: 12,
-        letterSpacing: '0.16em',
-        textTransform: 'uppercase',
-      }}
-    >
-      {children}
-    </button>
   );
 }
 

@@ -130,6 +130,40 @@ input[type='radio'] {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* SocialLinks — hover effects con color de marca */
+.social-brand-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 40px var(--brand-glow, rgba(0, 0, 0, 0.5));
+}
+.social-brand-tile:hover .social-tile-bg {
+  opacity: 1;
+}
+.social-brand-tile:hover .social-icon-box {
+  background: var(--blanco);
+  color: var(--brand-color);
+  transform: scale(1.05);
+}
+.social-brand-tile:hover .social-arrow {
+  color: var(--brand-fg, #fff);
+  transform: translate(6px, -6px) scale(1.1);
+}
+.social-brand-tile:hover .t-display,
+.social-brand-tile:hover .social-handle,
+.social-brand-tile:hover .social-sub {
+  color: var(--brand-fg, #fff) !important;
+}
+.social-brand-tile:hover .social-tile-underline {
+  width: 100%;
+}
+
+.social-email-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(204, 34, 34, 0.55);
+}
+.social-email-tile:hover .social-arrow {
+  transform: translateX(8px);
+}
+
 .tricolor-strip {
   display: flex;
   height: 4px;

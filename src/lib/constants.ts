@@ -51,6 +51,7 @@ export const ROUTES = {
   noticias: '/noticias',
   unete: '/unete',
   login: '/login',
+  signup: '/signup',
   admin: '/admin',
   adminMiembros: '/admin/miembros',
   adminEventos: '/admin/eventos',
