@@ -8,6 +8,7 @@ const LINKS: Array<{ to: string; label: string }> = [
   { to: ROUTES.nosotros, label: 'El club' },
   { to: ROUTES.reglamento, label: 'Reglamento' },
   { to: ROUTES.eventos, label: 'Rodadas' },
+  { to: ROUTES.cronograma, label: 'Cronograma' },
   { to: ROUTES.galeria, label: 'Galería' },
   { to: ROUTES.noticias, label: 'Noticias' },
   { to: ROUTES.unete, label: 'Únete' },

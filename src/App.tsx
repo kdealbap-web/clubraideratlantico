@@ -10,6 +10,7 @@ import { NoticiasPage } from './pages/public/Noticias';
 import { UnetePage } from './pages/public/Unete';
 import { LoginPage } from './pages/public/Login';
 import { SignupPage } from './pages/public/Signup';
+import { CronogramaPage as PublicCronogramaPage } from './pages/public/Cronograma';
 
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { DashboardPage } from './pages/admin/Dashboard';
@@ -36,6 +37,7 @@ export function App() {
       <Route path={ROUTES.unete} element={<UnetePage />} />
       <Route path={ROUTES.login} element={<LoginPage />} />
       <Route path={ROUTES.signup} element={<SignupPage />} />
+      <Route path={ROUTES.cronograma} element={<PublicCronogramaPage />} />
 
       <Route
         path={ROUTES.admin}
