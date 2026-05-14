@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { CronogramaPoster, MESES } from '../../components/cronograma/CronogramaPoster';
@@ -13,7 +13,10 @@ import {
   IconRoute,
   IconWhatsApp,
 } from '../../components/icons';
-import type { EventItem } from '../../types';
+import type { EventItem, TipoEvento } from '../../types';
+
+type FiltroTipo = 'Todos' | TipoEvento;
+const FILTROS_TIPO: FiltroTipo[] = ['Todos', 'Rodada', 'Evento', 'Capacitación'];
 
 export function CronogramaPage() {
   const today = new Date();
@@ -22,6 +25,7 @@ export function CronogramaPage() {
   const [events, setEvents] = useState<EventItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<EventItem | null>(null);
+  const [filtro, setFiltro] = useState<FiltroTipo>('Todos');
 
   useEffect(() => {
     let active = true;
@@ -54,6 +58,31 @@ export function CronogramaPage() {
   const isCurrentMonth =
     today.getFullYear() === year && today.getMonth() + 1 === month;
   const monthsAheadOrBehind = (year - today.getFullYear()) * 12 + (month - 1 - today.getMonth());
+
+  const counts = useMemo(() => {
+    if (!events) return null;
+    const map: Record<FiltroTipo, number> = {
+      Todos: events.length,
+      Rodada: 0,
+      Evento: 0,
+      Capacitación: 0,
+    };
+    for (const e of events) {
+      if (e.tipo === 'Rodada' || e.tipo === 'Evento' || e.tipo === 'Capacitación') {
+        map[e.tipo] += 1;
+      }
+    }
+    return map;
+  }, [events]);
+
+  const filteredEvents = useMemo(() => {
+    if (!events) return null;
+    if (filtro === 'Todos') return events;
+    return events.filter((e) => e.tipo === filtro);
+  }, [events, filtro]);
+
+  // Key para forzar re-mount con animación al cambiar mes/filtro
+  const animKey = `${year}-${month}-${filtro}`;
 
   const navigate = (delta: number) => {
     let newM = month + delta;
@@ -168,8 +197,48 @@ export function CronogramaPage() {
                 textTransform: 'uppercase',
               }}
             >
-              {events?.length ?? 0} {events?.length === 1 ? 'evento' : 'eventos'}
+              {filteredEvents?.length ?? 0} {filteredEvents?.length === 1 ? 'evento' : 'eventos'}
             </span>
+          </div>
+
+          {/* Filtros por tipo */}
+          <div
+            style={{
+              marginTop: 24,
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            {FILTROS_TIPO.map((f) => {
+              const active = filtro === f;
+              const count = counts?.[f] ?? 0;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFiltro(f)}
+                  style={{
+                    padding: '8px 14px',
+                    background: active ? 'var(--rojo)' : 'transparent',
+                    color: active ? 'var(--blanco)' : 'var(--light)',
+                    border: `1px solid ${active ? 'var(--rojo)' : 'var(--borde)'}`,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-cond)',
+                    fontSize: 11,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    transition: 'background .2s, color .2s, border-color .2s',
+                  }}
+                >
+                  {f}
+                  <span style={{ opacity: 0.6, fontSize: 10 }}>{count}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -192,7 +261,11 @@ export function CronogramaPage() {
             className="cronograma-grid"
           >
             {/* Columna lista interactiva */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div
+              key={animKey}
+              className="crono-fade"
+              style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+            >
               <header style={{ marginBottom: 4 }}>
                 <h2
                   className="t-display"
@@ -206,16 +279,24 @@ export function CronogramaPage() {
                 </p>
               </header>
 
-              {events === null ? (
+              {filteredEvents === null ? (
                 <Loading />
-              ) : events.length === 0 ? (
+              ) : filteredEvents.length === 0 ? (
                 <EmptyState
                   icon={<IconCalendar size={24} />}
-                  title={`Aún no hay eventos publicados para ${monthLabel.toLowerCase()}`}
-                  body="El comité publica el cronograma con anticipación. Vuelve pronto o navega entre meses."
+                  title={
+                    filtro === 'Todos'
+                      ? `Aún no hay eventos publicados para ${monthLabel.toLowerCase()}`
+                      : `Sin eventos de tipo "${filtro}" en ${monthLabel.toLowerCase()}`
+                  }
+                  body={
+                    filtro === 'Todos'
+                      ? 'El comité publica el cronograma con anticipación. Vuelve pronto o navega entre meses.'
+                      : "Cambia el filtro arriba a 'Todos' para ver los demás eventos del mes."
+                  }
                 />
               ) : (
-                events.map((ev) => (
+                filteredEvents.map((ev) => (
                   <PublicEventRow
                     key={ev.id}
                     ev={ev}
@@ -288,6 +369,8 @@ export function CronogramaPage() {
             >
               <div className="kicker">· Poster del mes</div>
               <div
+                key={animKey}
+                className="crono-fade"
                 style={{
                   width: '100%',
                   maxWidth: 540,
@@ -302,7 +385,7 @@ export function CronogramaPage() {
                 <CronogramaPoster
                   mes={monthLabel}
                   year={year}
-                  events={events ?? []}
+                  events={filteredEvents ?? []}
                   responsive
                 />
               </div>
@@ -375,6 +458,13 @@ export function CronogramaPage() {
         @media (max-width: 920px) {
           .cronograma-grid { grid-template-columns: 1fr !important; }
           .cronograma-poster-col { position: static !important; order: -1; }
+        }
+        .crono-fade {
+          animation: crono-fade-in 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+        @keyframes crono-fade-in {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 

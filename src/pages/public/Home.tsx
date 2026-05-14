@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { Hero } from '../../components/public/Hero';
+import { HomeCronogramaPreview } from '../../components/public/HomeCronogramaPreview';
 import { CLUB, ROUTES } from '../../lib/constants';
 import { IconBike, IconCalendar, IconImage, IconNews, IconRoute, IconUsers } from '../../components/icons';
 
@@ -24,6 +25,8 @@ export function HomePage() {
           { value: 'Caribe', label: 'Región' },
         ]}
       />
+
+      <HomeCronogramaPreview />
 
       <section style={{ padding: '64px 32px', background: 'var(--negro)' }}>
         <div
