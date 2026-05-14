@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Favicon: el logo real del club en todas las plataformas -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="shortcut icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+    <link rel="apple-touch-icon-precomposed" href="/logo.png" />
+    <meta name="msapplication-TileImage" content="/logo.png" />
+    <meta name="msapplication-TileColor" content="#0a0a0a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Club Raider Atlántico — Comunidad de motociclistas del Caribe colombiano. Rodadas, hermandad y red de apoyo vial."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Club Raider Atlántico" />
+    <meta
+      property="og:description"
+      content="Comunidad de motociclistas del Caribe colombiano."
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://clubraideratlantico.com" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Club Raider Atlántico" />
+    <meta
+      name="twitter:description"
+      content="Comunidad de motociclistas del Caribe colombiano."
+    />
+
+    <title>Club Raider Atlántico</title>
+
+    <style>
+      /* ---- Splash loader (CSS-only, antes del bundle React) ---- */
+      :root {
+        color-scheme: dark;
+      }
+      html, body { margin: 0; padding: 0; background: #0a0a0a; }
+      #raider-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        overflow: hidden;
+        transition: opacity .45s ease, visibility .45s ease;
+      }
+      #raider-splash::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(204, 34, 34, 0.22), transparent 60%);
+        pointer-events: none;
+      }
+      #raider-splash.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .rl-mark {
+        width: 88px;
+        height: 88px;
+        animation: rl-logo-pulse 1.6s ease-in-out infinite;
+        position: relative;
+        z-index: 2;
+      }
+      .rl-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+      .rl-stage {
+        position: relative;
+        width: min(560px, 92vw);
+        height: 140px;
+        z-index: 2;
+      }
+
+      .rl-road {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 14px;
+        background:
+          repeating-linear-gradient(
+            90deg,
+            #cc2222 0 28px,
+            transparent 28px 56px
+          ),
+          linear-gradient(180deg, #1a1a1a, #0a0a0a);
+        animation: rl-road-scroll 0.55s linear infinite;
+        opacity: 0.85;
+      }
+      .rl-road::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: -2px;
+        height: 1px;
+        background: #2a2a2a;
+      }
+
+      .rl-bike {
+        position: absolute;
+        left: -150px;
+        bottom: 18px;
+        width: 140px;
+        height: 80px;
+        animation: rl-moto-drive 4.2s cubic-bezier(.6,.05,.4,.95) infinite;
+      }
+      .rl-bike-inner {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        animation: rl-bike-bob 0.42s ease-in-out infinite alternate;
+        transform-origin: center bottom;
+      }
+      .rl-bike-inner img {
+        width: 140px;
+        height: 80px;
+        object-fit: contain;
+        display: block;
+      }
+      .rl-led {
+        position: absolute;
+        right: 6px;
+        top: 28px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff3333;
+        animation: rl-led 0.65s ease-in-out infinite alternate;
+      }
+      .rl-led::after {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: -6px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(204,34,34,.7), transparent 70%);
+        animation: rl-led-glow 0.65s ease-in-out infinite alternate;
+      }
+
+      .rl-puffs {
+        position: absolute;
+        bottom: 22px;
+        left: 0;
+        width: 80px;
+        height: 24px;
+        pointer-events: none;
+      }
+      .rl-puff {
+        position: absolute;
+        bottom: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(204, 34, 34, 0.32);
+        animation: rl-puff 0.9s ease-out infinite;
+      }
+      .rl-puff:nth-child(2) { left: 18px; animation-delay: 0.3s; }
+      .rl-puff:nth-child(3) { left: 36px; animation-delay: 0.6s; }
+
+      .rl-rev {
+        position: relative;
+        z-index: 2;
+        width: 280px;
+        max-width: 80vw;
+        height: 6px;
+        background: #181818;
+        overflow: hidden;
+      }
+      .rl-rev::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, #cc2222 50%, transparent);
+        animation: rl-revsweep 1.1s linear infinite;
+      }
+
+      .rl-tag {
+        position: relative;
+        z-index: 2;
+        font-family: 'Barlow Condensed', system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 12px;
+        letter-spacing: 0.4em;
+        text-transform: uppercase;
+        color: #cc2222;
+      }
+
+      @keyframes rl-logo-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.06); opacity: 0.85; }
+      }
+      @keyframes rl-road-scroll {
+        from { background-position: 0 0, 0 0; }
+        to { background-position: -56px 0, 0 0; }
+      }
+      @keyframes rl-moto-drive {
+        0% { left: -150px; }
+        100% { left: calc(100% + 30px); }
+      }
+      @keyframes rl-bike-bob {
+        from { transform: translateY(0) rotate(-0.6deg); }
+        to { transform: translateY(-2px) rotate(0.6deg); }
+      }
+      @keyframes rl-led {
+        from { opacity: 0.55; }
+        to { opacity: 1; }
+      }
+      @keyframes rl-led-glow {
+        from { transform: scale(0.7); opacity: 0.4; }
+        to { transform: scale(1.6); opacity: 0.95; }
+      }
+      @keyframes rl-puff {
+        0% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+        100% { transform: translate(-24px, -16px) scale(1.8); opacity: 0; }
+      }
+      @keyframes rl-revsweep {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(100%); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="raider-splash" aria-hidden="true" role="status" aria-label="Cargando">
+      <div class="rl-mark">
+        <img src="/logo.png" alt="" />
+      </div>
+
+      <div class="rl-stage">
+        <div class="rl-road"></div>
+        <div class="rl-bike">
+          <div class="rl-bike-inner">
+            <img src="/moto-raider.png" alt="" />
+            <span class="rl-led" aria-hidden="true"></span>
+          </div>
+          <div class="rl-puffs" aria-hidden="true">
+            <span class="rl-puff"></span>
+            <span class="rl-puff"></span>
+            <span class="rl-puff"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rl-rev" aria-hidden="true"></div>
+      <div class="rl-tag">Encendiendo motores…</div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        var t0 = performance.now();
+        var MIN_MS = 1800;
+        function hide() {
+          var el = document.getElementById('raider-splash');
+          if (!el) return;
+          el.classList.add('is-hidden');
+          setTimeout(function () { el.remove(); }, 500);
+        }
+        function whenReady() {
+          var elapsed = performance.now() - t0;
+          var wait = Math.max(0, MIN_MS - elapsed);
+          setTimeout(hide, wait);
+        }
+        if (document.readyState === 'complete') whenReady();
+        else window.addEventListener('load', whenReady);
+      })();
+    </script>
+  </body>
+</html>

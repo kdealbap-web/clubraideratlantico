@@ -1,0 +1,7 @@
+node_modules
+dist
+*.lock
+*.log
+public/logo.png
+public/favicon.svg
+public/moto-raider.png
