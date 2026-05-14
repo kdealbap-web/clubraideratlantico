@@ -7,6 +7,7 @@ import { FieldShell, TextField } from './Field';
 import { RolPicker } from '../admin/RolPicker';
 import { Btn } from '../admin/Buttons';
 import type { Member, Rol, EstadoMiembro } from '../../types';
+import { GRUPOS_COMITE } from '../../types';
 
 const ROL_VALUES: [Rol, ...Rol[]] = [
   'ADMINISTRADOR',
@@ -43,6 +44,11 @@ const MiembroSchema = z.object({
   emergencia_nombre: z.string().optional(),
   emergencia_tel: z.string().optional(),
   emergencia_relacion: z.string().optional(),
+
+  grupo: z.enum(['lideres', 'disciplina', 'ruta', 'contenido', '']).optional(),
+  cargo: z.string().optional(),
+  num: z.coerce.number().int().min(1).max(9999).optional().or(z.literal('').transform(() => undefined)),
+  desde: z.coerce.number().int().min(2000).max(new Date().getFullYear() + 1).optional().or(z.literal('').transform(() => undefined)),
 });
 
 type MiembroInput = z.infer<typeof MiembroSchema>;
@@ -88,6 +94,10 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
           emergencia_nombre: initial.emergencia?.nombre ?? '',
           emergencia_tel: initial.emergencia?.tel ?? '',
           emergencia_relacion: initial.emergencia?.relacion ?? '',
+          grupo: initial.grupo ?? '',
+          cargo: initial.cargo ?? '',
+          num: initial.num ?? undefined,
+          desde: initial.desde ?? undefined,
         }
       : {
           rol: 'GENERAL',
@@ -131,6 +141,10 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
       moto_placa: values.moto_placa || null,
       moto_color: values.moto_color || null,
       emergencia,
+      grupo: values.grupo ? values.grupo : null,
+      cargo: values.cargo || null,
+      num: values.num ?? null,
+      desde: values.desde ?? null,
     };
 
     if (initial) {
@@ -256,6 +270,45 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
         <Row>
           <FieldShell label="Rodadas asistidas" hint="Contador histórico. Se incrementa al hacer check-in.">
             <TextField type="number" {...register('rodadas')} />
+          </FieldShell>
+        </Row>
+      </Section>
+
+      {/* Plantilla oficial */}
+      <Section title="Plantilla oficial (público)" subtitle="Datos visibles en /nosotros si el miembro forma parte del comité.">
+        <Row>
+          <FieldShell label="Sub-grupo" hint="Solo para Administradores/Líderes que pertenezcan a un grupo">
+            <select
+              {...register('grupo')}
+              style={{
+                height: 38,
+                background: 'var(--dark-2)',
+                color: 'var(--blanco)',
+                border: '1px solid var(--borde)',
+                padding: '0 12px',
+                fontFamily: 'var(--font-body)',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            >
+              <option value="">— Ninguno —</option>
+              {GRUPOS_COMITE.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+          </FieldShell>
+          <FieldShell label="Cargo" hint="Presidente · Capitán de ruta · Fotógrafa…">
+            <TextField {...register('cargo')} />
+          </FieldShell>
+        </Row>
+        <Row>
+          <FieldShell label="Dorsal #" hint="Número único de piloto (1-9999)">
+            <TextField type="number" {...register('num')} />
+          </FieldShell>
+          <FieldShell label="Año de ingreso" hint="Para card 'Desde'">
+            <TextField type="number" {...register('desde')} />
           </FieldShell>
         </Row>
       </Section>

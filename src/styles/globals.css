@@ -176,6 +176,114 @@ input[type='radio'] {
 .tricolor-strip .ts-blue { background: var(--azul, #003DA5); }
 .tricolor-strip .ts-red { background: var(--rojo); }
 
+/* Galería — Apple-style transiciones --------------------------------- */
+@keyframes ken-burns {
+  from {
+    transform: scale(1) translate(0, 0);
+  }
+  to {
+    transform: scale(1.08) translate(-1%, -1%);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gallery-hero-slide {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gallery-hero-slide.is-active {
+  opacity: 1;
+  animation: ken-burns 7s ease-out forwards;
+}
+
+.gallery-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  break-inside: avoid;
+  margin-bottom: 8px;
+  cursor: pointer;
+  background: var(--dark-1);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.gallery-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s;
+}
+.gallery-card:hover img {
+  transform: scale(1.04);
+  filter: brightness(0.7);
+}
+.gallery-card-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 14px 14px 12px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.85) 80%);
+  color: var(--blanco);
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s;
+}
+.gallery-card:hover .gallery-card-overlay {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.96);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.25s ease forwards;
+}
+
+.lightbox-image-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.lightbox-image-slide.is-active {
+  opacity: 1;
+  animation: fade-in 0.5s ease forwards;
+}
+.lightbox-image-slide img {
+  max-width: 92vw;
+  max-height: 78vh;
+  object-fit: contain;
+  display: block;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
 /* Responsive ------------------------------------------------------------ */
 @media (max-width: 880px) {
   .admin-shell {

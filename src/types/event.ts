@@ -17,4 +17,11 @@ export interface EventItem {
   dificultad: Dificultad;
   tipo: TipoEvento;
   km: number;
+  cover_url: string | null;
+  contacto_lider: string | null;
+  contacto_tel: string | null;
+  ubicacion_url: string | null;
+  requisitos: string | null;
+  recomendaciones: string | null;
+  que_llevar: string | null;
 }

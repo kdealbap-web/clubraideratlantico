@@ -48,7 +48,46 @@ export interface Member {
   contacto_trabajo: string | null;
   bio: string | null;
   moto_soat: string | null;
+
+  grupo: GrupoComite | null;
+  cargo: string | null;
+  num: number | null;
+  desde: number | null;
 }
+
+export type GrupoComite = 'lideres' | 'disciplina' | 'ruta' | 'contenido';
+
+export const GRUPOS_COMITE: Array<{
+  id: GrupoComite;
+  label: string;
+  short: string;
+  desc: string;
+}> = [
+  {
+    id: 'lideres',
+    label: 'Líderes',
+    short: 'LD',
+    desc: 'Dirección y representación oficial del club.',
+  },
+  {
+    id: 'disciplina',
+    label: 'Grupo de Disciplina',
+    short: 'DC',
+    desc: 'Reglamento, seguridad vial y código de conducta.',
+  },
+  {
+    id: 'ruta',
+    label: 'Grupo de Ruta',
+    short: 'RT',
+    desc: 'Diseño de recorridos, logística y guía de rodadas.',
+  },
+  {
+    id: 'contenido',
+    label: 'Grupo de Contenido',
+    short: 'CT',
+    desc: 'Fotografía, video, redes sociales y narrativa del club.',
+  },
+];
 
 export const ROL_LABELS: Record<Rol, string> = {
   ADMINISTRADOR: 'Administrador',

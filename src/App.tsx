@@ -18,6 +18,7 @@ import { EventosAdminPage } from './pages/admin/Eventos';
 import { GaleriaAdminPage } from './pages/admin/Galeria';
 import { NoticiasAdminPage } from './pages/admin/Noticias';
 import { ConfiguracionPage } from './pages/admin/Configuracion';
+import { CronogramaPage } from './pages/admin/Cronograma';
 
 import { PortalPage } from './pages/portal/Portal';
 
@@ -49,6 +50,7 @@ export function App() {
         <Route path="eventos" element={<EventosAdminPage />} />
         <Route path="galeria" element={<GaleriaAdminPage />} />
         <Route path="noticias" element={<NoticiasAdminPage />} />
+        <Route path="cronograma" element={<CronogramaPage />} />
         <Route
           path="configuracion"
           element={

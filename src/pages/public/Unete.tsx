@@ -9,16 +9,16 @@ export function UnetePage() {
   return (
     <PublicLayout withSocialLinks={false}>
       <Hero
-        kicker="Aspirante · primer paso al parche oficial"
+        kicker="Únete como miembro del club"
         title={
           <>
-            Únete como <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>aspirante</span>.
+            Sé parte del <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>Club</span>.
           </>
         }
-        subtitle="El parche se gana rodando. Si cumples con los requisitos, tu ingreso al grupo de Aspirantes es inmediato. De ahí en adelante, tu disciplina y tu pasión hablan por ti."
+        subtitle="Si cumples con los requisitos, entras de inmediato como miembro General — el primer rango del club. De ahí en adelante, tu disciplina te lleva a Aspirante y al parche oficial de Piloto."
       />
 
-      {/* Bloque requisitos + proceso */}
+      {/* Bloque requisitos */}
       <section style={{ padding: '40px 32px', maxWidth: 1000, margin: '0 auto', width: '100%' }}>
         <div
           style={{
@@ -45,6 +45,41 @@ export function UnetePage() {
           />
         </div>
 
+        {/* Jerarquía y camino al parche */}
+        <div
+          style={{
+            border: '1px solid var(--borde)',
+            background: 'var(--dark-1)',
+            padding: '24px 24px 18px',
+            marginBottom: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div className="kicker">· Tu camino dentro del club</div>
+          <p style={{ color: 'var(--blanco)', margin: 0, fontSize: 15, lineHeight: 1.6 }}>
+            Cuando llenas este formulario y el comité aprueba, entras como{' '}
+            <strong style={{ color: 'var(--rojo)' }}>General</strong>. Es el rango base — tienes
+            acceso al portal personal, puedes acompañar rodadas y demostrar quién eres como piloto.
+          </p>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 0,
+              marginTop: 6,
+              border: '1px solid var(--borde)',
+            }}
+          >
+            <RankStep step="1" rank="General" desc="Entras aquí. Rango base, acceso al club, acompañas rodadas." active />
+            <RankStep step="2" rank="Aspirante" desc="Te promueve el comité por participación y compromiso constante." />
+            <RankStep step="3" rank="Piloto Oficial" desc="Llevas el parche. Rango operativo más alto. Lideras." />
+          </div>
+        </div>
+
+        {/* Filosofía de evaluación */}
         <div
           style={{
             border: '1px solid var(--borde)',
@@ -56,10 +91,10 @@ export function UnetePage() {
             gap: 8,
           }}
         >
-          <div className="kicker">· Cómo te conviertes en Piloto Oficial</div>
+          <div className="kicker">· Cómo subes de rango</div>
           <p style={{ color: 'var(--blanco)', margin: 0, fontSize: 15, lineHeight: 1.55 }}>
-            Una vez dentro del grupo de Aspirantes, <strong>el cronómetro no corre</strong> — tu actitud
-            habla por ti. No hay tiempo definido para el ascenso. El comité evalúa:
+            <strong>El cronómetro no corre</strong> — tu actitud habla por ti. No hay tiempo definido
+            para los ascensos. El comité evalúa:
           </p>
           <ul
             style={{
@@ -70,20 +105,21 @@ export function UnetePage() {
               paddingLeft: 22,
             }}
           >
-            <li><strong style={{ color: 'var(--blanco)' }}>Participación:</strong> qué tanto te involucras en el día a día del club</li>
-            <li><strong style={{ color: 'var(--blanco)' }}>Asistencia:</strong> tu presencia constante en rodadas y reuniones</li>
-            <li><strong style={{ color: 'var(--blanco)' }}>Apoyo en logística:</strong> aportar con la organización de eventos</li>
-            <li><strong style={{ color: 'var(--blanco)' }}>Proactividad:</strong> iniciativa para aportar y crecer junto al grupo</li>
-            <li><strong style={{ color: 'var(--blanco)' }}>Sentido de pertenencia:</strong> ganas reales de ser parte de la historia</li>
+            <li><strong style={{ color: 'var(--blanco)' }}>Participación</strong> en el día a día del club</li>
+            <li><strong style={{ color: 'var(--blanco)' }}>Asistencia</strong> constante a rodadas y reuniones</li>
+            <li><strong style={{ color: 'var(--blanco)' }}>Apoyo en logística</strong> de eventos</li>
+            <li><strong style={{ color: 'var(--blanco)' }}>Proactividad</strong> y aporte al grupo</li>
+            <li><strong style={{ color: 'var(--blanco)' }}>Sentido de pertenencia</strong> y ganas reales de ser parte de la historia</li>
           </ul>
           <p style={{ color: 'var(--muted)', margin: '8px 0 0', fontSize: 13 }}>
-            El ascenso al parche oficial depende 100% de tu disciplina y pasión.{' '}
+            El ascenso depende 100% de tu disciplina y pasión.{' '}
             <Link to={ROUTES.reglamento} style={{ color: 'var(--rojo)' }}>
               Lee el reglamento completo →
             </Link>
           </p>
         </div>
 
+        {/* Advertencia plazo */}
         <div
           style={{
             border: '1px solid var(--rojo)',
@@ -151,6 +187,68 @@ function RequisitoCard({
       </div>
       <strong style={{ color: 'var(--blanco)', fontSize: 16 }}>{title}</strong>
       <p style={{ color: 'var(--light)', fontSize: 13, lineHeight: 1.5, margin: 0 }}>{body}</p>
+    </div>
+  );
+}
+
+function RankStep({
+  step,
+  rank,
+  desc,
+  active = false,
+}: {
+  step: string;
+  rank: string;
+  desc: string;
+  active?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        padding: '16px 18px',
+        borderRight: '1px solid var(--borde)',
+        background: active ? 'var(--rojo-soft)' : 'transparent',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+      }}
+    >
+      {active ? (
+        <span
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: 3,
+            width: '100%',
+            background: 'var(--rojo)',
+          }}
+        />
+      ) : null}
+      <div
+        style={{
+          fontFamily: 'var(--font-cond)',
+          fontSize: 10,
+          letterSpacing: '0.2em',
+          color: active ? 'var(--rojo)' : 'var(--muted)',
+          textTransform: 'uppercase',
+          fontWeight: 700,
+        }}
+      >
+        Rango {step}
+      </div>
+      <div
+        className="t-display"
+        style={{
+          fontSize: 22,
+          color: active ? 'var(--blanco)' : 'var(--light)',
+          margin: 0,
+        }}
+      >
+        {rank}
+      </div>
+      <p style={{ color: 'var(--muted)', fontSize: 12, lineHeight: 1.45, margin: 0 }}>{desc}</p>
     </div>
   );
 }
