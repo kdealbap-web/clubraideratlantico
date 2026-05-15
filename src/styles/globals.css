@@ -1,5 +1,26 @@
 @import './tokens.css';
 
+/* ── Tema claro: override de contraste ─────────────────────────────────
+   Defaults de tokens.css quedan demasiado suaves contra fondos crema. */
+:root[data-theme='light'] {
+  --muted: #5C5040;
+  --light: #2D2620;
+  --blanco-soft: #18140F;
+  --borde: #BFB6A4;
+  --borde-strong: #6E6452;
+}
+
+:root[data-theme='light'] input,
+:root[data-theme='light'] textarea,
+:root[data-theme='light'] select {
+  color: var(--blanco);
+}
+:root[data-theme='light'] input::placeholder,
+:root[data-theme='light'] textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 *,
 *::before,
 *::after {
@@ -301,9 +322,18 @@ input[type='radio'] {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+  body {
+    font-size: 14.5px;
+  }
   .public-nav-links {
     display: none !important;
   }
+}
+
+/* Helper para tablas / containers anchos en móvil */
+.scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 

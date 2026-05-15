@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PublicLayout } from '../../components/public/PublicLayout';
-import { REGLAMENTO } from '../../data/reglamento';
+import { REGLAMENTO, REGLAMENTO_META } from '../../data/reglamento';
 import { CLUB } from '../../lib/constants';
 import { IconChevronDown, IconDownload } from '../../components/icons';
 
@@ -9,6 +9,7 @@ export function ReglamentoPage() {
   const firstArticleId = firstTitulo?.items[0]?.n ?? '1.1';
   const [openArticle, setOpenArticle] = useState<string | null>(firstArticleId);
   const [activeTitle, setActiveTitle] = useState<string>(firstTitulo?.id ?? 'titulo-1');
+  const [tocMobileOpen, setTocMobileOpen] = useState(false);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -30,9 +31,10 @@ export function ReglamentoPage() {
 
   return (
     <PublicLayout>
+      {/* HERO */}
       <section
         style={{
-          padding: '80px 32px 40px',
+          padding: '64px 24px 36px',
           borderBottom: '1px solid var(--borde)',
         }}
       >
@@ -41,18 +43,26 @@ export function ReglamentoPage() {
           <h1
             className="t-display"
             style={{
-              fontSize: 'clamp(56px, 11vw, 160px)',
+              fontSize: 'clamp(48px, 10vw, 140px)',
               lineHeight: 0.9,
-              margin: '12px 0 24px',
+              margin: '12px 0 18px',
               color: 'var(--blanco)',
             }}
           >
-            Reglamento del{' '}
-            <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>club</span>.
+            Reglamento{' '}
+            <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>interno</span>.
           </h1>
-          <p style={{ maxWidth: 720, fontSize: 16, color: 'var(--light)', lineHeight: 1.6 }}>
-            Estas son las reglas que sostienen al club. Al solicitar tu ingreso, las aceptas todas. Si
-            algo no está claro, escríbele al admin a{' '}
+          <p
+            style={{
+              maxWidth: 720,
+              fontSize: 15.5,
+              color: 'var(--light)',
+              lineHeight: 1.6,
+              margin: 0,
+            }}
+          >
+            {REGLAMENTO_META.subtitulo}. Documento de uso interno del Club Raider Atlántico.
+            Al solicitar tu ingreso aceptas estas normas. Si algo no está claro, escribe a{' '}
             <a
               href={`mailto:${CLUB.emails.admin}`}
               style={{
@@ -62,36 +72,95 @@ export function ReglamentoPage() {
               }}
             >
               {CLUB.emails.admin}
-            </a>{' '}
-            antes de inscribirte.
+            </a>
+            .
           </p>
 
+          {/* Acciones: descargar PDF + imprimir */}
           <div
             style={{
               display: 'flex',
+              gap: 10,
               flexWrap: 'wrap',
-              marginTop: 40,
+              marginTop: 24,
+            }}
+          >
+            <a
+              href={REGLAMENTO_META.pdfUrl}
+              download="Reglamento_ClubRaider_2026.pdf"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'var(--rojo)',
+                color: 'var(--blanco)',
+                padding: '12px 18px',
+                fontFamily: 'var(--font-cond)',
+                fontWeight: 600,
+                fontSize: 12,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                clipPath: 'var(--clip-btn)',
+              }}
+            >
+              <IconDownload size={14} /> Descargar PDF
+            </a>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'transparent',
+                color: 'var(--blanco)',
+                border: '1px solid var(--borde-strong)',
+                padding: '12px 18px',
+                fontFamily: 'var(--font-cond)',
+                fontWeight: 600,
+                fontSize: 12,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+              }}
+            >
+              Imprimir
+            </button>
+          </div>
+
+          {/* Metadata strip */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              marginTop: 36,
               borderTop: '1px solid var(--borde)',
             }}
           >
             {[
-              { k: 'Total artículos', v: totalArticulos },
-              { k: 'Títulos', v: REGLAMENTO.length },
-              { k: 'Última revisión', v: 'Marzo 2026' },
-              { k: 'Aprobado por', v: 'Asamblea general' },
-            ].map((m, i) => (
+              { k: 'Total artículos', v: String(totalArticulos) },
+              { k: 'Títulos', v: String(REGLAMENTO.length) },
+              { k: 'Versión', v: REGLAMENTO_META.version.replace('Versión ', '') },
+              { k: 'Fecha', v: REGLAMENTO_META.fecha },
+              { k: 'Aprobado por', v: REGLAMENTO_META.fundador },
+            ].map((m, i, arr) => (
               <div
                 key={m.k}
                 style={{
-                  flex: '1 1 200px',
-                  padding: '20px 24px 0',
-                  borderRight: i < 3 ? '1px solid var(--borde)' : 'none',
+                  padding: '20px 22px 4px',
+                  borderRight: i < arr.length - 1 ? '1px solid var(--borde)' : 'none',
                 }}
               >
-                <div className="t-display" style={{ fontSize: 36, color: 'var(--rojo)' }}>
+                <div
+                  className="t-display"
+                  style={{ fontSize: 28, color: 'var(--rojo)', lineHeight: 1 }}
+                >
                   {m.v}
                 </div>
-                <div className="t-cond-up" style={{ fontSize: 11, color: 'var(--light)' }}>
+                <div className="kicker" style={{ fontSize: 10, marginTop: 6 }}>
                   {m.k}
                 </div>
               </div>
@@ -100,20 +169,102 @@ export function ReglamentoPage() {
         </div>
       </section>
 
-      <section style={{ padding: '48px 32px' }}>
+      {/* TOC móvil (accordion sticky) */}
+      <div
+        className="reglamento-toc-mobile"
+        style={{
+          display: 'none',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+          background: 'rgba(10,10,10,0.95)',
+          borderBottom: '1px solid var(--borde)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setTocMobileOpen((v) => !v)}
+          aria-expanded={tocMobileOpen}
+          style={{
+            width: '100%',
+            padding: '14px 22px',
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--blanco)',
+            fontFamily: 'var(--font-cond)',
+            fontSize: 13,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <span>
+            <span style={{ color: 'var(--rojo)', marginRight: 8 }}>·</span> Índice del reglamento
+          </span>
+          <IconChevronDown
+            size={14}
+            style={{
+              transform: `rotate(${tocMobileOpen ? 180 : 0}deg)`,
+              transition: 'transform .25s',
+            }}
+          />
+        </button>
+        {tocMobileOpen ? (
+          <div
+            style={{
+              padding: '4px 14px 14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              maxHeight: '60vh',
+              overflowY: 'auto',
+            }}
+          >
+            {REGLAMENTO.map((g) => (
+              <a
+                key={g.id}
+                href={`#${g.id}`}
+                onClick={() => setTocMobileOpen(false)}
+                style={{
+                  fontFamily: 'var(--font-cond)',
+                  fontSize: 13,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  padding: '10px 12px',
+                  borderLeft: `2px solid ${activeTitle === g.id ? 'var(--rojo)' : 'transparent'}`,
+                  color: activeTitle === g.id ? 'var(--blanco)' : 'var(--light)',
+                  background: activeTitle === g.id ? 'var(--rojo-soft)' : 'transparent',
+                  textDecoration: 'none',
+                }}
+              >
+                <span style={{ color: 'var(--rojo)', marginRight: 8 }}>{g.n}.</span>
+                {g.t}
+              </a>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      {/* CONTENIDO */}
+      <section style={{ padding: '36px 24px' }}>
         <div
+          className="reglamento-grid"
           style={{
             maxWidth: 1320,
             margin: '0 auto',
             display: 'grid',
-            gridTemplateColumns: '260px 1fr',
-            gap: 48,
+            gridTemplateColumns: '260px minmax(0, 1fr)',
+            gap: 40,
             alignItems: 'flex-start',
           }}
-          className="reglamento-grid"
         >
-          {/* TOC */}
+          {/* TOC desktop sticky */}
           <aside
+            className="reglamento-toc-desktop"
             style={{
               position: 'sticky',
               top: 24,
@@ -125,7 +276,10 @@ export function ReglamentoPage() {
               overflowY: 'auto',
             }}
           >
-            <div className="t-cond-up" style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8 }}>
+            <div
+              className="kicker"
+              style={{ marginBottom: 8 }}
+            >
               · Índice
             </div>
             {REGLAMENTO.map((g) => (
@@ -137,65 +291,54 @@ export function ReglamentoPage() {
                   fontSize: 13,
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  padding: '8px 10px',
+                  padding: '10px 12px',
                   borderLeft: `2px solid ${activeTitle === g.id ? 'var(--rojo)' : 'transparent'}`,
                   color: activeTitle === g.id ? 'var(--blanco)' : 'var(--light)',
                   background: activeTitle === g.id ? 'var(--rojo-soft)' : 'transparent',
                   textDecoration: 'none',
+                  lineHeight: 1.35,
                 }}
               >
                 <span style={{ color: 'var(--rojo)', marginRight: 6 }}>{g.n}.</span>
                 {g.t}
               </a>
             ))}
-
-            <button
-              type="button"
-              onClick={() => window.print()}
-              style={{
-                marginTop: 14,
-                fontFamily: 'var(--font-cond)',
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                color: 'var(--light)',
-                background: 'var(--dark-2)',
-                border: '1px solid var(--borde)',
-                padding: '10px 12px',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
-            >
-              <IconDownload size={12} /> Imprimir / PDF
-            </button>
           </aside>
 
-          {/* Content */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
+          {/* Articulos */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 44, minWidth: 0 }}>
             {REGLAMENTO.map((g) => (
-              <section key={g.id} id={g.id} style={{ scrollMarginTop: 80 }}>
+              <section
+                key={g.id}
+                id={g.id}
+                style={{ scrollMarginTop: 100 }}
+              >
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'baseline',
-                    gap: 16,
-                    paddingBottom: 16,
+                    gap: 14,
+                    paddingBottom: 14,
                     borderBottom: '1px solid var(--borde)',
-                    marginBottom: 16,
+                    marginBottom: 14,
+                    flexWrap: 'wrap',
                   }}
                 >
                   <span
                     className="t-display"
-                    style={{ fontSize: 48, color: 'var(--rojo)' }}
+                    style={{ fontSize: 'clamp(32px, 5vw, 48px)', color: 'var(--rojo)' }}
                   >
                     {g.n}.
                   </span>
                   <h2
                     className="t-display"
-                    style={{ fontSize: 'clamp(28px, 4vw, 40px)', margin: 0, color: 'var(--blanco)' }}
+                    style={{
+                      fontSize: 'clamp(24px, 4vw, 38px)',
+                      margin: 0,
+                      color: 'var(--blanco)',
+                      flex: 1,
+                      minWidth: 0,
+                    }}
                   >
                     {g.t}
                   </h2>
@@ -220,8 +363,8 @@ export function ReglamentoPage() {
                             width: '100%',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 14,
-                            padding: '14px 18px',
+                            gap: 12,
+                            padding: '13px 16px',
                             background: 'transparent',
                             border: 'none',
                             color: 'inherit',
@@ -235,14 +378,22 @@ export function ReglamentoPage() {
                               fontSize: 11,
                               color: 'var(--rojo)',
                               letterSpacing: '0.14em',
-                              minWidth: 36,
+                              minWidth: 56,
+                              flexShrink: 0,
+                              fontWeight: 700,
                             }}
                           >
                             {item.n}
                           </span>
                           <span
                             className="t-display"
-                            style={{ flex: 1, fontSize: 19, color: 'var(--blanco)' }}
+                            style={{
+                              flex: 1,
+                              fontSize: 17,
+                              color: 'var(--blanco)',
+                              lineHeight: 1.25,
+                              minWidth: 0,
+                            }}
                           >
                             {item.t}
                           </span>
@@ -251,6 +402,7 @@ export function ReglamentoPage() {
                               transform: `rotate(${open ? 180 : 0}deg)`,
                               transition: 'transform .2s',
                               color: 'var(--light)',
+                              flexShrink: 0,
                             }}
                           >
                             <IconChevronDown size={14} />
@@ -260,10 +412,11 @@ export function ReglamentoPage() {
                           <div
                             className="fade-up"
                             style={{
-                              padding: '0 18px 18px 68px',
-                              color: 'var(--light)',
+                              padding: '0 16px 18px 78px',
+                              color: 'var(--blanco-soft, var(--light))',
                               fontSize: 14.5,
                               lineHeight: 1.7,
+                              whiteSpace: 'pre-line',
                             }}
                           >
                             {item.d}
@@ -276,6 +429,7 @@ export function ReglamentoPage() {
               </section>
             ))}
 
+            {/* Firma final */}
             <div
               style={{
                 position: 'relative',
@@ -296,38 +450,82 @@ export function ReglamentoPage() {
                 }}
               />
               <div className="kicker" style={{ marginBottom: 8 }}>
-                · Aceptación
+                · Expedición
               </div>
-              <h3
-                className="t-display"
-                style={{ fontSize: 28, color: 'var(--blanco)', margin: '0 0 10px' }}
-              >
-                Al solicitar tu ingreso, aceptas todo este reglamento.
-              </h3>
-              <p style={{ color: 'var(--light)', fontSize: 14.5, lineHeight: 1.7, marginBottom: 16 }}>
-                No hay letra chica, no hay cuotas, no hay sorpresas. Si algo no está claro, escríbenos
-                antes de inscribirte.
+              <p style={{ color: 'var(--blanco)', fontSize: 16, lineHeight: 1.65, margin: '0 0 16px' }}>
+                El presente Reglamento Interno se expide el día{' '}
+                <strong style={{ color: 'var(--rojo)' }}>{REGLAMENTO_META.fecha}</strong> en la
+                ciudad de {REGLAMENTO_META.ciudad}.
               </p>
-              <a
-                href={`mailto:${CLUB.emails.admin}`}
+              <div
                 style={{
-                  fontFamily: 'var(--font-cond)',
-                  fontSize: 12,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: 'var(--blanco)',
-                  border: '1px solid var(--borde-strong)',
-                  padding: '10px 16px',
-                  textDecoration: 'none',
-                  display: 'inline-block',
+                  paddingTop: 14,
+                  borderTop: '1px solid var(--borde)',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 16,
                 }}
               >
-                Tengo una duda →
-              </a>
+                <div>
+                  <div
+                    className="t-display"
+                    style={{ fontSize: 20, color: 'var(--blanco)', letterSpacing: '0.04em' }}
+                  >
+                    {REGLAMENTO_META.fundador.toUpperCase()}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontStyle: 'italic',
+                      color: 'var(--rojo)',
+                      fontSize: 14,
+                      marginTop: 2,
+                    }}
+                  >
+                    Fundador Principal de Club Raider Atlántico
+                  </div>
+                </div>
+                <a
+                  href={REGLAMENTO_META.pdfUrl}
+                  download="Reglamento_ClubRaider_2026.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'var(--rojo)',
+                    color: 'var(--blanco)',
+                    padding: '12px 18px',
+                    fontFamily: 'var(--font-cond)',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    clipPath: 'var(--clip-btn)',
+                  }}
+                >
+                  <IconDownload size={14} /> Descargar PDF oficial
+                </a>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      <style>{`
+        @media (max-width: 880px) {
+          .reglamento-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .reglamento-toc-desktop { display: none !important; }
+          .reglamento-toc-mobile { display: block !important; }
+        }
+        @media print {
+          .public-nav-links, header, footer { display: none !important; }
+        }
+      `}</style>
     </PublicLayout>
   );
 }
