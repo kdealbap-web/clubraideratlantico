@@ -199,3 +199,11 @@ export const IconChecklist = makeIcon(
     <path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17" />
   </>,
 );
+export const IconGift = makeIcon(
+  <>
+    <rect x="3" y="8" width="18" height="4" />
+    <path d="M5 12v9h14v-9" />
+    <path d="M12 8v13" />
+    <path d="M12 8S11 3 8 3a2.5 2.5 0 0 0 0 5h4zM12 8s1-5 4-5a2.5 2.5 0 0 1 0 5h-4z" />
+  </>,
+);

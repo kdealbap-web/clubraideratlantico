@@ -8,7 +8,9 @@ import { Btn } from '../../components/admin/Buttons';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
 import { IconCalendar, IconEdit, IconPlus, IconTrash } from '../../components/icons';
 import { FormEvento } from '../../components/forms/FormEvento';
-import type { EventItem } from '../../types';
+import type { EstadoEvento, EventItem } from '../../types';
+
+const ESTADOS_EVENTO: EstadoEvento[] = ['borrador', 'publicado', 'realizado', 'cancelado'];
 
 export function EventosAdminPage() {
   const { rows, error, reload } = useTable<EventItem>('events', {
@@ -71,8 +73,8 @@ export function EventosAdminPage() {
     {
       key: 'estado',
       header: 'Estado',
-      width: '120px',
-      render: (r) => <Badge>{r.estado}</Badge>,
+      width: '150px',
+      render: (r) => <EstadoSelect ev={r} onChanged={() => void reload()} />,
     },
     {
       key: 'actions',
@@ -163,21 +165,54 @@ export function EventosAdminPage() {
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
+function EstadoSelect({ ev, onChanged }: { ev: EventItem; onChanged: () => void }) {
+  const [saving, setSaving] = useState(false);
+
+  const change = async (estado: EstadoEvento) => {
+    if (estado === ev.estado) return;
+    setSaving(true);
+    const { error } = await supabase.from('events').update({ estado }).eq('id', ev.id);
+    setSaving(false);
+    if (error) {
+      alert(`No se pudo cambiar el estado: ${error.message}`);
+      return;
+    }
+    onChanged();
+  };
+
+  const cancelado = ev.estado === 'cancelado';
+  const realizado = ev.estado === 'realizado';
+  const color = cancelado ? 'var(--rojo-light)' : realizado ? 'var(--muted)' : 'var(--blanco)';
+  const borderColor = cancelado ? 'var(--rojo)' : 'var(--borde)';
+
   return (
-    <span
+    <select
+      value={ev.estado}
+      disabled={saving}
+      onClick={(e) => e.stopPropagation()}
+      onChange={(e) => void change(e.target.value as EstadoEvento)}
+      title="Cambiar estado del evento"
       style={{
+        width: '100%',
+        height: 32,
+        background: 'var(--dark-2)',
+        color,
+        border: `1px solid ${borderColor}`,
+        padding: '0 8px',
         fontFamily: 'var(--font-cond)',
         fontSize: 11,
-        letterSpacing: '0.14em',
+        letterSpacing: '0.12em',
         textTransform: 'uppercase',
-        padding: '4px 8px',
-        border: '1px solid var(--borde)',
-        color: 'var(--light)',
+        outline: 'none',
+        cursor: saving ? 'wait' : 'pointer',
       }}
     >
-      {children}
-    </span>
+      {ESTADOS_EVENTO.map((s) => (
+        <option key={s} value={s}>
+          {s}
+        </option>
+      ))}
+    </select>
   );
 }
 

@@ -6,6 +6,7 @@ import { PageHeader } from '../../components/admin/PageHeader';
 import { Btn } from '../../components/admin/Buttons';
 import { IconDownload, IconWhatsApp } from '../../components/icons';
 import { CronogramaPoster, MESES } from '../../components/cronograma/CronogramaPoster';
+import { CumpleanosMes } from '../../components/cronograma/CumpleanosMes';
 import type { EventItem } from '../../types';
 
 export function CronogramaPage() {
@@ -31,7 +32,7 @@ export function CronogramaPage() {
         .select('*')
         .gte('fecha', start)
         .lte('fecha', end)
-        .in('estado', ['publicado', 'realizado'])
+        .in('estado', ['publicado', 'realizado', 'cancelado'])
         .order('fecha', { ascending: true });
       if (!active) return;
       if (e) {
@@ -162,6 +163,10 @@ export function CronogramaPage() {
         </Control>
       </div>
 
+      <div style={{ marginBottom: 24 }}>
+        <CumpleanosMes month={month} variant="admin" />
+      </div>
+
       {error ? (
         <div
           role="alert"
@@ -196,6 +201,7 @@ export function CronogramaPage() {
         <CronogramaPoster
           ref={posterRef}
           mes={monthLabel}
+          monthNum={month}
           year={year}
           events={events ?? []}
           tagline={tagline}

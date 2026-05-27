@@ -1,6 +1,15 @@
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import type { EventItem } from '../../types';
 import { CLUB } from '../../lib/constants';
+import { displayEstado } from '../../lib/eventStatus';
+import {
+  type PosterTheme,
+  chipClipPath,
+  chipRadius,
+  getPosterTheme,
+  PosterDecor,
+  withAlpha,
+} from './cronogramaThemes';
 
 export const MESES = [
   'ENERO',
@@ -26,6 +35,8 @@ interface CronogramaPosterProps {
   mes: string;
   year: number;
   events: EventItem[];
+  /** Mes 1-12 — selecciona el tema. Si falta, se deriva de `mes`. */
+  monthNum?: number;
   tagline?: string;
   highlight?: string;
   /** Scale fijo. Si presente, ignora responsive. */
@@ -40,6 +51,7 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
       mes,
       year,
       events,
+      monthNum,
       tagline = '¡Súbete A La Aventura!',
       highlight = 'Todos juntos.',
       scale,
@@ -47,6 +59,8 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
     },
     ref,
   ) {
+    const theme = getPosterTheme(monthNum ?? MESES.indexOf(mes.toUpperCase() as (typeof MESES)[number]) + 1);
+
     // Modo responsive con ResizeObserver: medimos el contenedor real, no el viewport.
     const wrapperRef = useRef<HTMLDivElement>(null);
     const [autoScale, setAutoScale] = useState<number | null>(null);
@@ -77,7 +91,7 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
             height: autoScale == null ? 0 : H * autoScale,
             position: 'relative',
             overflow: 'hidden',
-            background: '#0a0a0a',
+            background: theme.bg,
             transition: 'height .25s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
@@ -89,7 +103,7 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
               position: 'absolute',
               top: 0,
               left: 0,
-              background: '#0a0a0a',
+              background: theme.bg,
               overflow: 'hidden',
               color: '#F0EDE8',
               fontFamily: 'var(--font-body)',
@@ -103,6 +117,7 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
               events={events}
               tagline={tagline}
               highlight={highlight}
+              theme={theme}
             />
           </div>
         </div>
@@ -117,7 +132,7 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
           width: W,
           height: H,
           position: 'relative',
-          background: '#0a0a0a',
+          background: theme.bg,
           overflow: 'hidden',
           color: '#F0EDE8',
           fontFamily: 'var(--font-body)',
@@ -132,6 +147,7 @@ export const CronogramaPoster = forwardRef<HTMLDivElement, CronogramaPosterProps
           events={events}
           tagline={tagline}
           highlight={highlight}
+          theme={theme}
         />
       </div>
     );
@@ -145,13 +161,20 @@ function PosterContents({
   events,
   tagline,
   highlight,
+  theme,
 }: {
   mes: string;
   year: number;
   events: EventItem[];
   tagline: string;
   highlight: string;
+  theme: PosterTheme;
 }) {
+  // Mes gigante: escala el tamaño según el largo del nombre para que
+  // siempre quepa en una línea (ENERO grande, SEPTIEMBRE más pequeño).
+  const monthFontSize = Math.min(260, Math.round(980 / (Math.max(mes.length, 1) * 0.58)));
+  const left = theme.align === 'left';
+
   return (
     <>
       {/* Background blurred logo */}
@@ -162,10 +185,14 @@ function PosterContents({
           inset: 0,
           background: `url('/logo.png') center/700px no-repeat`,
           filter: 'blur(60px)',
-          opacity: 0.45,
+          opacity: theme.logoOpacity,
         }}
       />
-      {/* Red gradient bottom */}
+
+      {/* Capa decorativa del mes */}
+      <PosterDecor theme={theme} />
+
+      {/* Gradiente inferior con el acento del mes */}
       <div
         aria-hidden="true"
         style={{
@@ -174,8 +201,10 @@ function PosterContents({
           right: 0,
           bottom: 0,
           height: '68%',
-          background:
-            'linear-gradient(180deg, transparent 0%, rgba(204,34,34,0.55) 70%, rgba(204,34,34,0.85) 100%)',
+          background: `linear-gradient(180deg, transparent 0%, ${withAlpha(
+            theme.accent,
+            0.5,
+          )} 70%, ${withAlpha(theme.accent, 0.82)} 100%)`,
         }}
       />
 
@@ -184,9 +213,11 @@ function PosterContents({
         style={{
           position: 'relative',
           paddingTop: 120,
+          paddingLeft: left ? 90 : 0,
+          paddingRight: left ? 90 : 0,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
+          alignItems: left ? 'flex-start' : 'center',
           gap: 28,
         }}
       >
@@ -205,9 +236,9 @@ function PosterContents({
             fontWeight: 700,
             fontSize: 56,
             letterSpacing: '0.45em',
-            color: '#CC2222',
+            color: theme.accent,
             textTransform: 'uppercase',
-            textAlign: 'center',
+            textAlign: left ? 'left' : 'center',
             paddingLeft: '0.45em',
           }}
         >
@@ -217,12 +248,13 @@ function PosterContents({
         <div
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 260,
+            fontSize: monthFontSize,
             lineHeight: 0.95,
-            color: '#FFFFFF',
+            color: theme.monthColor,
             letterSpacing: '-0.02em',
-            textAlign: 'center',
+            textAlign: left ? 'left' : 'center',
             textShadow: '0 6px 30px rgba(0,0,0,0.45)',
+            whiteSpace: 'nowrap',
           }}
         >
           {mes}
@@ -267,7 +299,7 @@ function PosterContents({
             · Por publicar próximamente ·
           </div>
         ) : (
-          events.map((e) => <PosterEventRow key={e.id} ev={e} />)
+          events.map((e) => <PosterEventRow key={e.id} ev={e} theme={theme} />)
         )}
       </div>
 
@@ -342,7 +374,7 @@ function PosterContents({
               style={{
                 width: 14,
                 height: 30,
-                background: '#CC2222',
+                background: theme.accent,
                 display: 'inline-block',
               }}
             />
@@ -378,21 +410,29 @@ function PosterContents({
   );
 }
 
-function PosterEventRow({ ev }: { ev: EventItem }) {
+function PosterEventRow({ ev, theme }: { ev: EventItem; theme: PosterTheme }) {
   const d = new Date(ev.fecha);
   const dia = Number.isNaN(d.getTime()) ? '—' : d.getUTCDate();
   const dow = Number.isNaN(d.getTime()) ? '—' : (DIAS_CORTO[d.getUTCDay()] ?? '—');
   const sub = ev.salida ? `${ev.salida}${ev.hora ? ` / ${ev.hora}` : ''}` : ev.hora ?? '';
 
+  const estado = displayEstado(ev);
+  const cancelado = estado === 'cancelado';
+  const realizado = estado === 'realizado';
+  const muted = cancelado || realizado;
+
+  const chipBg = cancelado ? withAlpha('#FFFFFF', 0.16) : realizado ? withAlpha(theme.accent, 0.5) : theme.accent;
+
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32, opacity: muted ? 0.82 : 1 }}>
       <div
         style={{
           flexShrink: 0,
-          background: '#CC2222',
+          background: chipBg,
           color: '#FFFFFF',
           padding: '18px 32px',
-          borderRadius: 999,
+          borderRadius: chipRadius(theme.chip),
+          clipPath: chipClipPath(theme.chip),
           minWidth: 200,
           textAlign: 'center',
           fontFamily: 'var(--font-cond)',
@@ -406,19 +446,25 @@ function PosterEventRow({ ev }: { ev: EventItem }) {
         {dow}. {String(dia).padStart(2, '0')}
       </div>
       <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-cond)',
-            fontWeight: 700,
-            fontSize: 50,
-            color: '#FFFFFF',
-            letterSpacing: '0.02em',
-            textTransform: 'uppercase',
-            lineHeight: 1,
-            textShadow: '0 2px 8px rgba(0,0,0,0.45)',
-          }}
-        >
-          {ev.titulo}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-cond)',
+              fontWeight: 700,
+              fontSize: 50,
+              color: cancelado ? 'rgba(255,255,255,0.7)' : '#FFFFFF',
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase',
+              lineHeight: 1,
+              textShadow: '0 2px 8px rgba(0,0,0,0.45)',
+              textDecoration: cancelado ? 'line-through' : 'none',
+              textDecorationThickness: cancelado ? 4 : undefined,
+            }}
+          >
+            {ev.titulo}
+          </div>
+          {cancelado ? <StatusStamp label="Cancelado" bg="#FFFFFF" color="#0a0a0a" /> : null}
+          {realizado ? <StatusStamp label="✓ Realizado" bg={theme.accent} color="#FFFFFF" /> : null}
         </div>
         {sub ? (
           <div
@@ -426,9 +472,10 @@ function PosterEventRow({ ev }: { ev: EventItem }) {
               fontFamily: 'var(--font-display)',
               fontStyle: 'italic',
               fontSize: 28,
-              color: '#CC2222',
+              color: cancelado ? 'rgba(255,255,255,0.55)' : theme.accent,
               marginTop: 6,
               textShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              textDecoration: cancelado ? 'line-through' : 'none',
             }}
           >
             {sub}
@@ -436,5 +483,27 @@ function PosterEventRow({ ev }: { ev: EventItem }) {
         ) : null}
       </div>
     </div>
+  );
+}
+
+function StatusStamp({ label, bg, color }: { label: string; bg: string; color: string }) {
+  return (
+    <span
+      style={{
+        flexShrink: 0,
+        background: bg,
+        color,
+        padding: '6px 16px',
+        borderRadius: 6,
+        fontFamily: 'var(--font-cond)',
+        fontWeight: 700,
+        fontSize: 24,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        lineHeight: 1,
+      }}
+    >
+      {label}
+    </span>
   );
 }

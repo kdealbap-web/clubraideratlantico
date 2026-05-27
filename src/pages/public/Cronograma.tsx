@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { CronogramaPoster, MESES } from '../../components/cronograma/CronogramaPoster';
+import { CumpleanosMes } from '../../components/cronograma/CumpleanosMes';
 import { supabase } from '../../lib/supabase';
+import { displayEstado } from '../../lib/eventStatus';
 import { CLUB, ROUTES } from '../../lib/constants';
 import { EmptyState } from '../../components/ui/EmptyState';
 import {
@@ -39,7 +41,7 @@ export function CronogramaPage() {
         .select('*')
         .gte('fecha', start)
         .lte('fecha', end)
-        .in('estado', ['publicado', 'realizado'])
+        .in('estado', ['publicado', 'realizado', 'cancelado'])
         .order('fecha', { ascending: true });
       if (!active) return;
       if (e) {
@@ -353,6 +355,8 @@ export function CronogramaPage() {
                   </a>
                 </div>
               </div>
+
+              <CumpleanosMes month={month} variant="public" />
             </div>
 
             {/* Columna poster preview */}
@@ -384,6 +388,7 @@ export function CronogramaPage() {
               >
                 <CronogramaPoster
                   mes={monthLabel}
+                  monthNum={month}
                   year={year}
                   events={filteredEvents ?? []}
                   responsive
@@ -482,8 +487,10 @@ function PublicEventRow({ ev, onClick }: { ev: EventItem; onClick: () => void })
     : d.toLocaleDateString('es-CO', { weekday: 'short', timeZone: 'UTC' })
         .replace('.', '')
         .toUpperCase();
-  const realizado = ev.estado === 'realizado';
-  const cupoFull = ev.inscritos >= ev.cupos && ev.cupos > 0;
+  const estado = displayEstado(ev);
+  const realizado = estado === 'realizado';
+  const cancelado = estado === 'cancelado';
+  const cupoFull = ev.inscritos >= ev.cupos && ev.cupos > 0 && !realizado && !cancelado;
 
   return (
     <article
@@ -497,6 +504,7 @@ function PublicEventRow({ ev, onClick }: { ev: EventItem; onClick: () => void })
         gap: 16,
         alignItems: 'center',
         cursor: 'pointer',
+        opacity: cancelado ? 0.72 : 1,
         transition: 'transform .22s, border-color .22s, box-shadow .22s',
       }}
       onMouseEnter={(e) => {
@@ -512,7 +520,7 @@ function PublicEventRow({ ev, onClick }: { ev: EventItem; onClick: () => void })
     >
       <div
         style={{
-          background: realizado ? 'var(--dark-2)' : 'var(--rojo)',
+          background: realizado || cancelado ? 'var(--dark-2)' : 'var(--rojo)',
           color: 'var(--blanco)',
           padding: '12px 0',
           textAlign: 'center',
@@ -533,10 +541,11 @@ function PublicEventRow({ ev, onClick }: { ev: EventItem; onClick: () => void })
           className="t-display"
           style={{
             fontSize: 19,
-            color: 'var(--blanco)',
+            color: cancelado ? 'var(--light)' : 'var(--blanco)',
             lineHeight: 1.1,
             textTransform: 'uppercase',
             letterSpacing: '0.02em',
+            textDecoration: cancelado ? 'line-through' : 'none',
           }}
         >
           {ev.titulo}
@@ -558,7 +567,9 @@ function PublicEventRow({ ev, onClick }: { ev: EventItem; onClick: () => void })
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        {cupoFull && !realizado ? (
+        {cancelado ? <StatusBadge label="Cancelado" tone="cancel" /> : null}
+        {realizado ? <StatusBadge label="Realizado" tone="done" /> : null}
+        {cupoFull ? (
           <span
             style={{
               fontFamily: 'var(--font-cond)',
@@ -832,6 +843,29 @@ function EventDrawerSlim({ event, onClose }: { event: EventItem | null; onClose:
         </div>
       </aside>
     </div>
+  );
+}
+
+function StatusBadge({ label, tone }: { label: string; tone: 'cancel' | 'done' }) {
+  const cancel = tone === 'cancel';
+  return (
+    <span
+      style={{
+        fontFamily: 'var(--font-cond)',
+        fontSize: 10,
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
+        padding: '4px 8px',
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+        background: cancel ? 'var(--rojo-soft)' : 'var(--dark-2)',
+        color: cancel ? 'var(--rojo-light)' : 'var(--light)',
+        border: `1px solid ${cancel ? 'var(--rojo)' : 'var(--borde-strong)'}`,
+      }}
+    >
+      {cancel ? '✕ ' : '✓ '}
+      {label}
+    </span>
   );
 }
 

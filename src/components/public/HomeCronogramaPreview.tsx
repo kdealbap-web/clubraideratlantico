@@ -17,14 +17,17 @@ export function HomeCronogramaPreview() {
 
   useEffect(() => {
     let active = true;
-    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    const t = new Date();
+    // Solo próximas (hoy en adelante): un evento publicado que ya pasó
+    // no es una "próxima rodada".
+    const todayStr = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
     const lastDay = new Date(year, month, 0).getDate();
     const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
     (async () => {
       const { data } = await supabase
         .from('events')
         .select('id, titulo, fecha, hora, salida, cupos, inscritos, tipo, dificultad, estado')
-        .gte('fecha', start)
+        .gte('fecha', todayStr)
         .lte('fecha', end)
         .eq('estado', 'publicado')
         .order('fecha', { ascending: true })
