@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { IconGift } from '../icons';
+import { CUMPLE_ROLES } from './cumpleanos';
 
 interface Cumple {
   id: string;
@@ -37,6 +38,7 @@ export function CumpleanosMes({
         .from('members')
         .select('id, nombre, apellido, fecha_nac')
         .eq('estado', 'activo')
+        .in('rol', CUMPLE_ROLES)
         .not('fecha_nac', 'is', null);
       if (!active) return;
       if (error) {

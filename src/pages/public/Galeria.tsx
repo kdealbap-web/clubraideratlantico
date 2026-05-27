@@ -2,19 +2,43 @@ import { useEffect, useMemo, useState } from 'react';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
+import { VideoPlayer } from '../../components/media/VideoPlayer';
 import type { GalleryItem } from '../../types';
 import {
   IconChevronLeft,
   IconChevronRight,
   IconClose,
   IconDownload,
+  IconFolder,
   IconImage,
+  IconPlay,
 } from '../../components/icons';
+
+interface Album {
+  name: string;
+  items: GalleryItem[];
+  cover: string;
+  count: number;
+  videoCount: number;
+  lastDate: string;
+}
+
+/** Portada de un item: video usa su poster; imagen usa su url. */
+function coverUrl(it: GalleryItem | undefined): string {
+  if (!it) return '';
+  return it.type === 'video' ? it.poster_url ?? '' : it.url;
+}
+
+function fmtShort(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 export function GaleriaPage() {
   const [items, setItems] = useState<GalleryItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState<string>('todas');
+  const [activeAlbum, setActiveAlbum] = useState<string | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -38,48 +62,58 @@ export function GaleriaPage() {
     };
   }, []);
 
-  const categories = useMemo(() => {
-    if (!items) return ['todas'];
-    const set = new Set(items.map((i) => i.cat).filter(Boolean));
-    return ['todas', ...Array.from(set).sort()];
+  const albums = useMemo<Album[] | null>(() => {
+    if (!items) return null;
+    const map = new Map<string, GalleryItem[]>();
+    for (const it of items) {
+      const key = (it.album && it.album.trim()) || 'General';
+      const arr = map.get(key) ?? [];
+      arr.push(it);
+      map.set(key, arr);
+    }
+    const out: Album[] = [];
+    for (const [name, arr] of map) {
+      const sorted = [...arr].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      const favImg = sorted.find((i) => i.fav && coverUrl(i));
+      const firstWithCover = sorted.find((i) => coverUrl(i));
+      out.push({
+        name,
+        items: sorted,
+        cover: coverUrl(favImg ?? firstWithCover ?? sorted[0]),
+        count: sorted.length,
+        videoCount: sorted.filter((i) => i.type === 'video').length,
+        lastDate: sorted[0]?.created_at ?? '',
+      });
+    }
+    out.sort((a, b) => (a.lastDate < b.lastDate ? 1 : -1));
+    return out;
   }, [items]);
 
   const featured = useMemo(() => {
     if (!items) return [];
-    const favs = items.filter((i) => i.fav);
-    return (favs.length > 0 ? favs : items).slice(0, 6);
+    const withCover = items.filter((i) => coverUrl(i));
+    const favs = withCover.filter((i) => i.fav);
+    return (favs.length > 0 ? favs : withCover).slice(0, 6);
   }, [items]);
 
-  const topThree = useMemo(() => {
-    if (!items) return [];
-    const favs = items.filter((i) => i.fav);
-    return (favs.length >= 3 ? favs : items).slice(0, 3);
-  }, [items]);
-
-  const filtered = useMemo(() => {
-    if (!items) return null;
-    return category === 'todas' ? items : items.filter((i) => i.cat === category);
-  }, [items, category]);
+  const activeItems = useMemo(() => {
+    if (!activeAlbum || !albums) return null;
+    return albums.find((a) => a.name === activeAlbum)?.items ?? [];
+  }, [albums, activeAlbum]);
 
   const hasItems = items && items.length > 0;
 
+  const openAlbum = (name: string) => {
+    setActiveAlbum(name);
+    setLightboxIdx(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <PublicLayout>
-      {/* Hero cinematográfico */}
-      {hasItems && featured.length > 0 ? (
-        <GalleryHero items={featured} />
-      ) : (
-        <PlainHero />
-      )}
+      {hasItems && featured.length > 0 ? <GalleryHero items={featured} /> : <PlainHero />}
 
-      <section
-        style={{
-          padding: '40px 24px 80px',
-          maxWidth: 1440,
-          margin: '0 auto',
-          width: '100%',
-        }}
-      >
+      <section style={{ padding: '40px 24px 80px', maxWidth: 1440, margin: '0 auto', width: '100%' }}>
         {error ? (
           <ErrorBox message={error} />
         ) : items === null ? (
@@ -90,93 +124,21 @@ export function GaleriaPage() {
             title={EMPTY_TEXTS.gallery.title}
             body={EMPTY_TEXTS.gallery.body}
           />
+        ) : activeAlbum && activeItems ? (
+          <AlbumView
+            name={activeAlbum}
+            items={activeItems}
+            onBack={() => {
+              setActiveAlbum(null);
+              setLightboxIdx(null);
+            }}
+            onOpen={(i) => setLightboxIdx(i)}
+          />
         ) : (
           <>
-            {/* Filtros */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 8,
-                marginBottom: 24,
-                overflowX: 'auto',
-                paddingBottom: 4,
-              }}
-            >
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(c)}
-                  style={{
-                    padding: '10px 18px',
-                    background: category === c ? 'var(--rojo)' : 'transparent',
-                    color: category === c ? 'var(--blanco)' : 'var(--light)',
-                    border: '1px solid var(--borde)',
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-cond)',
-                    fontSize: 12,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
-                    whiteSpace: 'nowrap',
-                    transition: 'background .2s, color .2s, border-color .2s',
-                  }}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-
-            {/* Lo más visto este mes — solo en "todas" */}
-            {category === 'todas' && topThree.length > 0 ? (
-              <section style={{ marginBottom: 40 }}>
-                <header style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      background: 'var(--rojo)',
-                      borderRadius: '50%',
-                      boxShadow: '0 0 0 4px rgba(204,34,34,0.18)',
-                    }}
-                  />
-                  <span className="kicker">· Lo más visto este mes</span>
-                </header>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: topThree.length === 3 ? '2fr 1fr 1fr' : 'repeat(auto-fit, minmax(220px, 1fr))',
-                    gap: 10,
-                    height: 'clamp(280px, 35vw, 420px)',
-                  }}
-                  className="gallery-top-grid"
-                >
-                  {topThree.map((g, i) => (
-                    <FeatureCard
-                      key={g.id}
-                      g={g}
-                      rank={i + 1}
-                      large={i === 0}
-                      onClick={() => {
-                        const idx = items?.findIndex((it) => it.id === g.id) ?? 0;
-                        setLightboxIdx(idx);
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            {/* Header con contador */}
             <header style={{ marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12 }}>
-              <h2
-                className="t-display"
-                style={{
-                  fontSize: 'clamp(28px, 4vw, 44px)',
-                  color: 'var(--blanco)',
-                  margin: 0,
-                }}
-              >
-                {category === 'todas' ? 'Todos los recuerdos' : category}
+              <h2 className="t-display" style={{ fontSize: 'clamp(28px, 4vw, 44px)', color: 'var(--blanco)', margin: 0 }}>
+                Álbumes
               </h2>
               <span
                 style={{
@@ -187,40 +149,27 @@ export function GaleriaPage() {
                   textTransform: 'uppercase',
                 }}
               >
-                {filtered?.length ?? 0} {filtered?.length === 1 ? 'foto' : 'fotos'}
+                {albums?.length ?? 0} {albums?.length === 1 ? 'carpeta' : 'carpetas'}
               </span>
             </header>
-
-            {/* Masonry */}
-            {filtered && filtered.length > 0 ? (
-              <div
-                style={{
-                  columnCount: 4,
-                  columnGap: 8,
-                }}
-                className="gallery-masonry"
-              >
-                {filtered.map((g, i) => (
-                  <GalleryCard
-                    key={g.id}
-                    item={g}
-                    onClick={() => setLightboxIdx(i)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title={`Sin fotos en ${category}`}
-                body="Selecciona otra categoría arriba o vuelve a 'Todas'."
-              />
-            )}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                gap: 14,
+              }}
+            >
+              {albums?.map((a) => (
+                <FolderCard key={a.name} album={a} onOpen={() => openAlbum(a.name)} />
+              ))}
+            </div>
           </>
         )}
       </section>
 
-      {filtered && lightboxIdx !== null ? (
+      {activeItems && lightboxIdx !== null ? (
         <Lightbox
-          items={filtered}
+          items={activeItems}
           index={lightboxIdx}
           onClose={() => setLightboxIdx(null)}
           onIndexChange={setLightboxIdx}
@@ -231,107 +180,169 @@ export function GaleriaPage() {
         @media (max-width: 1100px) { .gallery-masonry { column-count: 3 !important; } }
         @media (max-width: 760px)  { .gallery-masonry { column-count: 2 !important; } }
         @media (max-width: 480px)  { .gallery-masonry { column-count: 1 !important; } }
-        @media (max-width: 700px)  { .gallery-top-grid { grid-template-columns: 1fr !important; height: auto !important; } .gallery-top-grid > * { aspect-ratio: 16/10; } }
       `}</style>
     </PublicLayout>
   );
 }
 
-// ─── Feature card del "Lo más visto" ─────────────────────────────────────
-function FeatureCard({
-  g,
-  rank,
-  large,
-  onClick,
-}: {
-  g: GalleryItem;
-  rank: number;
-  large?: boolean;
-  onClick: () => void;
-}) {
+// ─── Tarjeta de carpeta/álbum ────────────────────────────────────────────
+function FolderCard({ album, onOpen }: { album: Album; onOpen: () => void }) {
   return (
     <div
-      onClick={onClick}
+      onClick={onOpen}
       role="button"
       tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onOpen();
+      }}
       style={{
-        position: 'relative',
         cursor: 'pointer',
-        overflow: 'hidden',
-        background: `url('${g.url}') center/cover`,
         border: '1px solid var(--borde)',
-        transition: 'transform .35s cubic-bezier(0.4, 0, 0.2, 1)',
+        background: 'var(--dark-1)',
+        overflow: 'hidden',
+        transition: 'transform .25s, border-color .25s, box-shadow .25s',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.012)';
+        e.currentTarget.style.transform = 'translateY(-4px)';
+        e.currentTarget.style.borderColor = 'var(--rojo)';
+        e.currentTarget.style.boxShadow = '0 14px 32px rgba(0,0,0,0.45)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.borderColor = 'var(--borde)';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
       <div
-        aria-hidden="true"
         style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'linear-gradient(180deg, transparent 50%, rgba(10,10,10,0.92))',
-        }}
-      />
-      <div style={{ position: 'absolute', top: 12, left: 12 }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-cond)',
-            fontSize: 10,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            background: 'rgba(10,10,10,0.7)',
-            color: 'var(--blanco)',
-            padding: '4px 9px',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            fontWeight: 700,
-          }}
-        >
-          ★ Top {rank}
-        </span>
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          left: 16,
-          right: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
+          position: 'relative',
+          paddingTop: '62%',
+          background: album.cover
+            ? `url('${album.cover}') center/cover`
+            : 'linear-gradient(135deg, var(--imgph-1), var(--imgph-3))',
         }}
       >
         <div
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85))' }}
+        />
+        <span
           style={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px 9px',
+            background: 'rgba(0,0,0,0.6)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            color: 'var(--blanco)',
             fontFamily: 'var(--font-cond)',
             fontSize: 10,
-            letterSpacing: '0.18em',
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
-            color: 'var(--rojo)',
-            fontWeight: 600,
           }}
         >
-          {g.cat}
+          <IconFolder size={13} /> Álbum
+        </span>
+        {album.videoCount > 0 ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '5px 9px',
+              background: 'var(--rojo)',
+              color: 'var(--blanco)',
+              fontFamily: 'var(--font-cond)',
+              fontSize: 10,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <IconPlay size={11} /> {album.videoCount}
+          </span>
+        ) : null}
+      </div>
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div className="t-display" style={{ fontSize: 18, color: 'var(--blanco)', lineHeight: 1.15 }}>
+          {album.name}
         </div>
-        <div
-          className="t-display"
-          style={{
-            fontSize: large ? 26 : 18,
-            color: 'var(--blanco)',
-            lineHeight: 1.1,
-            textShadow: '0 2px 8px rgba(0,0,0,0.85)',
-          }}
-        >
-          {g.label}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: 'var(--light)', fontFamily: 'var(--font-cond)', fontSize: 12, letterSpacing: '0.06em' }}>
+            {album.count} {album.count === 1 ? 'archivo' : 'archivos'}
+          </span>
+          {album.lastDate ? (
+            <span style={{ color: 'var(--muted)', fontSize: 11 }}>{fmtShort(album.lastDate)}</span>
+          ) : null}
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Vista de un álbum (masonry de su contenido) ─────────────────────────
+function AlbumView({
+  name,
+  items,
+  onBack,
+  onOpen,
+}: {
+  name: string;
+  items: GalleryItem[];
+  onBack: () => void;
+  onOpen: (i: number) => void;
+}) {
+  return (
+    <>
+      <header style={{ marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 14 }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '10px 14px',
+            background: 'transparent',
+            border: '1px solid var(--borde-strong)',
+            color: 'var(--blanco)',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-cond)',
+            fontSize: 11,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+          }}
+        >
+          <IconChevronLeft size={14} /> Álbumes
+        </button>
+        <h2 className="t-display" style={{ fontSize: 'clamp(26px, 4vw, 44px)', color: 'var(--blanco)', margin: 0 }}>
+          {name}
+        </h2>
+        <span
+          style={{
+            fontFamily: 'var(--font-cond)',
+            fontSize: 14,
+            letterSpacing: '0.14em',
+            color: 'var(--muted)',
+            textTransform: 'uppercase',
+          }}
+        >
+          {items.length} {items.length === 1 ? 'archivo' : 'archivos'}
+        </span>
+      </header>
+
+      <div style={{ columnCount: 4, columnGap: 8 }} className="gallery-masonry">
+        {items.map((g, i) => (
+          <GalleryCard key={g.id} item={g} onClick={() => onOpen(i)} />
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -342,9 +353,7 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
 
   useEffect(() => {
     if (items.length < 2 || paused) return;
-    const t = setInterval(() => {
-      setActive((i) => (i + 1) % items.length);
-    }, 5500);
+    const t = setInterval(() => setActive((i) => (i + 1) % items.length), 5500);
     return () => clearInterval(t);
   }, [items.length, paused]);
 
@@ -362,19 +371,15 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
         borderBottom: '1px solid var(--borde)',
       }}
     >
-      {/* Capas de imagen con crossfade */}
       {items.map((item, i) => (
         <div
           key={item.id}
           className={`gallery-hero-slide ${i === active ? 'is-active' : ''}`}
-          style={{
-            backgroundImage: `url('${item.url}')`,
-          }}
+          style={{ backgroundImage: `url('${coverUrl(item)}')` }}
           aria-hidden={i !== active}
         />
       ))}
 
-      {/* Overlay gradiente para legibilidad */}
       <div
         aria-hidden="true"
         style={{
@@ -386,7 +391,6 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
         }}
       />
 
-      {/* Caption */}
       {current ? (
         <div
           key={current.id}
@@ -412,7 +416,7 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
               fontWeight: 600,
             }}
           >
-            · {current.cat || 'Galería'}
+            · {current.album?.trim() || current.cat || 'Galería'}
           </div>
           <h1
             className="t-display"
@@ -430,23 +434,13 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
         </div>
       ) : null}
 
-      {/* Dots indicador */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 'clamp(20px, 4vw, 40px)',
-          right: 'clamp(20px, 4vw, 40px)',
-          display: 'flex',
-          gap: 6,
-          alignItems: 'center',
-        }}
-      >
+      <div style={{ position: 'absolute', top: 'clamp(20px, 4vw, 40px)', right: 'clamp(20px, 4vw, 40px)', display: 'flex', gap: 6, alignItems: 'center' }}>
         {items.map((_, i) => (
           <button
             key={i}
             type="button"
             onClick={() => setActive(i)}
-            aria-label={`Ver foto ${i + 1} de ${items.length}`}
+            aria-label={`Ver ${i + 1} de ${items.length}`}
             style={{
               width: i === active ? 24 : 8,
               height: 4,
@@ -460,7 +454,6 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
         ))}
       </div>
 
-      {/* Pill de categoría top-left */}
       <div
         style={{
           position: 'absolute',
@@ -485,12 +478,7 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
 
 function PlainHero() {
   return (
-    <section
-      style={{
-        padding: '88px 32px 56px',
-        borderBottom: '1px solid var(--borde)',
-      }}
-    >
+    <section style={{ padding: '88px 32px 56px', borderBottom: '1px solid var(--borde)' }}>
       <div style={{ maxWidth: 1320, margin: '0 auto' }}>
         <div className="kicker" style={{ marginBottom: 14 }}>
           · Archivo visual
@@ -499,19 +487,71 @@ function PlainHero() {
           className="t-display"
           style={{ fontSize: 'clamp(56px, 11vw, 156px)', lineHeight: 0.92, margin: 0, color: 'var(--blanco)' }}
         >
-          Cada rodada, <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>cada foto</span>.
+          Cada rodada, <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>cada recuerdo</span>.
         </h1>
       </div>
     </section>
   );
 }
 
-// ─── Card del grid masonry ───────────────────────────────────────────────
+// ─── Card del grid masonry (imagen o video) ──────────────────────────────
 function GalleryCard({ item, onClick }: { item: GalleryItem; onClick: () => void }) {
+  const cover = coverUrl(item);
+  const isVideo = item.type === 'video';
+
   return (
-    <div className="gallery-card" onClick={onClick} role="button" tabIndex={0}>
-      <img src={item.url} alt={item.label} loading="lazy" />
-      <div className="gallery-card-overlay">
+    <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      style={{
+        position: 'relative',
+        cursor: 'pointer',
+        breakInside: 'avoid',
+        marginBottom: 8,
+        border: '1px solid var(--borde)',
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, var(--imgph-1), var(--imgph-3))',
+      }}
+    >
+      {cover ? (
+        <img src={cover} alt={item.label} loading="lazy" style={{ width: '100%', display: 'block' }} />
+      ) : (
+        <div style={{ width: '100%', paddingTop: `${(1 / (item.ratio || 1.78)) * 100}%` }} />
+      )}
+
+      {isVideo ? (
+        <span
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'var(--blanco)' }}
+        >
+          <span
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              background: 'rgba(0,0,0,0.55)',
+              border: '1px solid rgba(255,255,255,0.5)',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <IconPlay size={24} />
+          </span>
+        </span>
+      ) : null}
+
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, transparent 55%, rgba(10,10,10,0.9))',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          padding: 14,
+        }}
+      >
         <div
           style={{
             fontFamily: 'var(--font-cond)',
@@ -523,17 +563,9 @@ function GalleryCard({ item, onClick }: { item: GalleryItem; onClick: () => void
             marginBottom: 4,
           }}
         >
-          {item.cat}
+          {isVideo ? 'Video' : item.cat}
         </div>
-        <div
-          className="t-display"
-          style={{
-            fontSize: 16,
-            color: 'var(--blanco)',
-            margin: 0,
-            lineHeight: 1.2,
-          }}
-        >
+        <div className="t-display" style={{ fontSize: 16, color: 'var(--blanco)', margin: 0, lineHeight: 1.2 }}>
           {item.label}
         </div>
       </div>
@@ -541,7 +573,7 @@ function GalleryCard({ item, onClick }: { item: GalleryItem; onClick: () => void
   );
 }
 
-// ─── Lightbox con crossfade ──────────────────────────────────────────────
+// ─── Lightbox (imagen o video) ───────────────────────────────────────────
 function Lightbox({
   items,
   index,
@@ -573,62 +605,30 @@ function Lightbox({
 
   const prev = () => onIndexChange((index - 1 + items.length) % items.length);
   const next = () => onIndexChange((index + 1) % items.length);
+  const isVideo = current.type === 'video';
 
   return (
     <div className="lightbox-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      {/* Header */}
       <header
         onClick={(e) => e.stopPropagation()}
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '20px 28px',
-          color: 'var(--blanco)',
-          flexShrink: 0,
-        }}
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', color: 'var(--blanco)', flexShrink: 0 }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-cond)',
-              fontSize: 10,
-              letterSpacing: '0.22em',
-              color: 'var(--rojo)',
-              textTransform: 'uppercase',
-              fontWeight: 600,
-            }}
-          >
-            {current.cat}
+          <span style={{ fontFamily: 'var(--font-cond)', fontSize: 10, letterSpacing: '0.22em', color: 'var(--rojo)', textTransform: 'uppercase', fontWeight: 600 }}>
+            {isVideo ? 'Video' : current.cat}
           </span>
           <span style={{ fontSize: 16, fontWeight: 500 }}>{current.label}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span
-            style={{
-              fontFamily: 'var(--font-cond)',
-              fontSize: 12,
-              letterSpacing: '0.18em',
-              color: 'var(--light)',
-            }}
-          >
+          <span style={{ fontFamily: 'var(--font-cond)', fontSize: 12, letterSpacing: '0.18em', color: 'var(--light)' }}>
             {String(index + 1).padStart(2, '0')} / {String(items.length).padStart(2, '0')}
           </span>
           <a
             href={current.url}
             target="_blank"
             rel="noreferrer"
-            title="Descargar / ver original"
-            style={{
-              width: 38,
-              height: 38,
-              display: 'grid',
-              placeItems: 'center',
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              color: 'var(--blanco)',
-              textDecoration: 'none',
-            }}
+            title="Abrir original"
+            style={{ width: 38, height: 38, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', color: 'var(--blanco)', textDecoration: 'none' }}
           >
             <IconDownload size={14} />
           </a>
@@ -636,93 +636,72 @@ function Lightbox({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            style={{
-              width: 38,
-              height: 38,
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.18)',
-              color: 'var(--blanco)',
-              cursor: 'pointer',
-              display: 'grid',
-              placeItems: 'center',
-            }}
+            style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', color: 'var(--blanco)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
           >
             <IconClose size={14} />
           </button>
         </div>
       </header>
 
-      {/* Stage con crossfade entre imágenes */}
-      <div
-        style={{
-          flex: 1,
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {items.map((item, i) => (
-          <div
-            key={item.id}
-            className={`lightbox-image-slide ${i === index ? 'is-active' : ''}`}
-          >
-            <img src={item.url} alt={item.label} />
-          </div>
-        ))}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', padding: 'clamp(12px, 3vw, 40px)' }}>
+          {isVideo ? (
+            <div style={{ width: 'min(100%, 1100px)' }}>
+              <VideoPlayer url={current.url} poster={current.poster_url} label={current.label} />
+            </div>
+          ) : (
+            <img
+              src={current.url}
+              alt={current.label}
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+            />
+          )}
+        </div>
 
-        {/* Nav buttons */}
         {items.length > 1 ? (
           <>
-            <button
-              type="button"
-              onClick={prev}
-              aria-label="Foto anterior"
-              style={navBtnStyle('left')}
-            >
+            <button type="button" onClick={prev} aria-label="Anterior" style={navBtnStyle('left')}>
               <IconChevronLeft size={22} />
             </button>
-            <button
-              type="button"
-              onClick={next}
-              aria-label="Foto siguiente"
-              style={navBtnStyle('right')}
-            >
+            <button type="button" onClick={next} aria-label="Siguiente" style={navBtnStyle('right')}>
               <IconChevronRight size={22} />
             </button>
           </>
         ) : null}
       </div>
 
-      {/* Footer thumbnails */}
       {items.length > 1 ? (
-        <footer
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            padding: '14px 20px 22px',
-            overflowX: 'auto',
-            flexShrink: 0,
-          }}
-        >
+        <footer onClick={(e) => e.stopPropagation()} style={{ padding: '14px 20px 22px', overflowX: 'auto', flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 6, justifyContent: 'center', minWidth: 'min-content' }}>
-            {items.map((item, i) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onIndexChange(i)}
-                aria-label={`Ir a foto ${i + 1}`}
-                style={{
-                  width: 64,
-                  height: 44,
-                  flexShrink: 0,
-                  border: i === index ? '2px solid var(--rojo)' : '2px solid transparent',
-                  background: `url('${item.url}') center/cover`,
-                  cursor: 'pointer',
-                  opacity: i === index ? 1 : 0.55,
-                  transition: 'opacity .25s, border-color .25s',
-                  padding: 0,
-                }}
-              />
-            ))}
+            {items.map((item, i) => {
+              const c = coverUrl(item);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onIndexChange(i)}
+                  aria-label={`Ir a ${i + 1}`}
+                  style={{
+                    position: 'relative',
+                    width: 64,
+                    height: 44,
+                    flexShrink: 0,
+                    border: i === index ? '2px solid var(--rojo)' : '2px solid transparent',
+                    background: c ? `url('${c}') center/cover` : 'var(--dark-2)',
+                    cursor: 'pointer',
+                    opacity: i === index ? 1 : 0.55,
+                    transition: 'opacity .25s, border-color .25s',
+                    padding: 0,
+                  }}
+                >
+                  {item.type === 'video' ? (
+                    <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'var(--blanco)' }}>
+                      <IconPlay size={14} />
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         </footer>
       ) : null}
@@ -753,13 +732,7 @@ function ErrorBox({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      style={{
-        border: '1px solid var(--rojo)',
-        background: 'var(--rojo-soft)',
-        color: 'var(--rojo-light)',
-        padding: '14px 16px',
-        fontSize: 13,
-      }}
+      style={{ border: '1px solid var(--rojo)', background: 'var(--rojo-soft)', color: 'var(--rojo-light)', padding: '14px 16px', fontSize: 13 }}
     >
       Supabase: {message}
     </div>

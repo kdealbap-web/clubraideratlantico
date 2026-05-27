@@ -207,3 +207,13 @@ export const IconGift = makeIcon(
     <path d="M12 8S11 3 8 3a2.5 2.5 0 0 0 0 5h4zM12 8s1-5 4-5a2.5 2.5 0 0 1 0 5h-4z" />
   </>,
 );
+export const IconPlay = makeIcon(<path d="M7 5v14l11-7z" />);
+export const IconVideo = makeIcon(
+  <>
+    <rect x="2" y="6" width="14" height="12" rx="2" />
+    <path d="m16 10 6-3v10l-6-3z" />
+  </>,
+);
+export const IconFolder = makeIcon(
+  <path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+);

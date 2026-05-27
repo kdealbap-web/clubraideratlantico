@@ -7,6 +7,7 @@ import { Btn } from '../../components/admin/Buttons';
 import { IconDownload, IconWhatsApp } from '../../components/icons';
 import { CronogramaPoster, MESES } from '../../components/cronograma/CronogramaPoster';
 import { CumpleanosMes } from '../../components/cronograma/CumpleanosMes';
+import { CumpleanosExport } from '../../components/cronograma/CumpleanosExport';
 import type { EventItem } from '../../types';
 
 export function CronogramaPage() {
@@ -251,6 +252,8 @@ export function CronogramaPage() {
           </a>
         </div>
       </div>
+
+      <CumpleanosExport />
     </section>
   );
 }

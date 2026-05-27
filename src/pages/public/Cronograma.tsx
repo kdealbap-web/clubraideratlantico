@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { CronogramaPoster, MESES } from '../../components/cronograma/CronogramaPoster';
 import { CumpleanosMes } from '../../components/cronograma/CumpleanosMes';
+import { RodadaVideos } from '../../components/media/RodadaVideos';
 import { supabase } from '../../lib/supabase';
 import { displayEstado } from '../../lib/eventStatus';
 import { CLUB, ROUTES } from '../../lib/constants';
@@ -795,6 +796,8 @@ function EventDrawerSlim({ event, onClose }: { event: EventItem | null; onClose:
               {event.requisitos}
             </div>
           ) : null}
+
+          <RodadaVideos eventId={event.id} />
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <a href={waShare} target="_blank" rel="noreferrer" style={waBtn}>

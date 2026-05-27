@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
+import { RodadaVideos } from '../../components/media/RodadaVideos';
 import type { EventItem, TipoEvento } from '../../types';
 import { CLUB, ROUTES } from '../../lib/constants';
 import {
@@ -1034,6 +1035,8 @@ function EventDrawer({ event, onClose }: { event: EventItem | null; onClose: () 
               </div>
             </DSection>
           ) : null}
+
+          <RodadaVideos eventId={event.id} />
 
           {event.que_llevar ? (
             <DSection title="Qué llevar">

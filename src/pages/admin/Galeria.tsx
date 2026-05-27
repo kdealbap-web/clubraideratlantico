@@ -5,7 +5,7 @@ import { PageHeader } from '../../components/admin/PageHeader';
 import { Drawer } from '../../components/admin/Drawer';
 import { Btn } from '../../components/admin/Buttons';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
-import { IconEdit, IconImage, IconPlus, IconTrash } from '../../components/icons';
+import { IconEdit, IconImage, IconPlay, IconPlus, IconTrash } from '../../components/icons';
 import { FormGaleria } from '../../components/forms/FormGaleria';
 import type { GalleryItem } from '../../types';
 
@@ -18,8 +18,9 @@ export function GaleriaAdminPage() {
 
   const onDelete = async (g: GalleryItem) => {
     if (!window.confirm(`¿Eliminar "${g.label}"? Esto borra también el archivo en Storage.`)) return;
-    if (g.storage_path) {
-      await supabase.storage.from('gallery').remove([g.storage_path]);
+    const paths = [g.storage_path, g.poster_path].filter((p): p is string => !!p);
+    if (paths.length > 0) {
+      await supabase.storage.from('gallery').remove(paths);
     }
     const { error: e } = await supabase.from('gallery').delete().eq('id', g.id);
     if (e) {
@@ -36,7 +37,7 @@ export function GaleriaAdminPage() {
         title="Galería."
         actions={
           <Btn icon={<IconPlus size={12} />} onClick={() => setCreating(true)}>
-            Subir imagen
+            Subir foto / video
           </Btn>
         }
       />
@@ -99,18 +100,63 @@ export function GaleriaAdminPage() {
                   background: `linear-gradient(135deg, var(--imgph-1), var(--imgph-3))`,
                 }}
               >
-                <img
-                  src={g.url}
-                  alt={g.label}
-                  loading="lazy"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
+                {(g.type === 'video' ? g.poster_url : g.url) ? (
+                  <img
+                    src={(g.type === 'video' ? g.poster_url : g.url) ?? ''}
+                    alt={g.label}
+                    loading="lazy"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : null}
+                {g.type === 'video' ? (
+                  <>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'grid',
+                        placeItems: 'center',
+                        color: 'var(--blanco)',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: '50%',
+                          background: 'rgba(0,0,0,0.55)',
+                          border: '1px solid rgba(255,255,255,0.4)',
+                          display: 'grid',
+                          placeItems: 'center',
+                        }}
+                      >
+                        <IconPlay size={22} />
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        padding: '4px 8px',
+                        background: 'rgba(0,0,0,0.7)',
+                        color: 'var(--blanco)',
+                        fontFamily: 'var(--font-cond)',
+                        fontSize: 10,
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Video
+                    </span>
+                  </>
+                ) : null}
                 {g.fav ? (
                   <span
                     style={{
@@ -132,7 +178,10 @@ export function GaleriaAdminPage() {
               </div>
               <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <strong style={{ color: 'var(--blanco)', fontSize: 13 }}>{g.label}</strong>
-                <span style={{ color: 'var(--muted)', fontSize: 12 }}>{g.cat}</span>
+                <span style={{ color: 'var(--muted)', fontSize: 12 }}>
+                  {g.cat}
+                  {g.album ? ` · ${g.album}` : ''}
+                </span>
                 <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                   <Btn variant="ghost" icon={<IconEdit size={12} />} onClick={() => setEditing(g)}>
                     Editar
@@ -147,7 +196,7 @@ export function GaleriaAdminPage() {
         </div>
       )}
 
-      <Drawer open={creating} title="Subir imagen" onClose={() => setCreating(false)}>
+      <Drawer open={creating} title="Subir foto o video" onClose={() => setCreating(false)}>
         <FormGaleria
           onDone={() => {
             setCreating(false);
