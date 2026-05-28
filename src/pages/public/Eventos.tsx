@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
@@ -17,10 +17,14 @@ type Filtro = 'Todos' | TipoEvento;
 const FILTROS: Filtro[] = ['Todos', 'Rodada', 'Evento', 'Capacitación'];
 
 export function EventosPage() {
+  const params = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<EventItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<EventItem | null>(null);
   const [filtro, setFiltro] = useState<Filtro>('Todos');
+
+  // El detalle abierto se deriva de la URL (/eventos/:id). Esto permite
+  // compartir el link directo a una rodada y que abra el drawer.
 
   useEffect(() => {
     let active = true;
@@ -44,6 +48,11 @@ export function EventosPage() {
   }, []);
 
   const today = new Date().toISOString().slice(0, 10);
+
+  const selected = useMemo<EventItem | null>(() => {
+    if (!params.id || !events) return null;
+    return events.find((e) => e.id === params.id) ?? null;
+  }, [params.id, events]);
 
   const filtered = useMemo(() => {
     if (!events) return null;
@@ -255,7 +264,7 @@ export function EventosPage() {
                   </div>
                   <CountdownPill date={next.fecha} />
                 </div>
-                <FeaturedEvent event={next} onOpen={() => setSelected(next)} />
+                <FeaturedEvent event={next} onOpen={() => navigate(`${ROUTES.eventos}/${next.id}`)} />
               </div>
             </section>
           ) : null}
@@ -274,7 +283,7 @@ export function EventosPage() {
                   }}
                 >
                   {rest.map((ev) => (
-                    <EventCard key={ev.id} ev={ev} onClick={() => setSelected(ev)} />
+                    <EventCard key={ev.id} ev={ev} onClick={() => navigate(`${ROUTES.eventos}/${ev.id}`)} />
                   ))}
                 </div>
               </div>
@@ -344,7 +353,7 @@ export function EventosPage() {
         </div>
       </section>
 
-      <EventDrawer event={selected} onClose={() => setSelected(null)} />
+      <EventDrawer event={selected} onClose={() => navigate(ROUTES.eventos)} />
     </PublicLayout>
   );
 }
@@ -820,7 +829,8 @@ function EventDrawer({ event, onClose }: { event: EventItem | null; onClose: () 
   const mapsUrl =
     event.ubicacion_url ||
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.salida)}`;
-  const shareText = `🏍️ ${event.titulo}\n📅 ${fmtFecha(event.fecha)} · ${event.hora}\n📍 ${event.salida}\n${event.descripcion}\n\nInscríbete: ${typeof window !== 'undefined' ? window.location.origin : 'https://clubraideratlantico.com'}/eventos`;
+  const shareOrigin = typeof window !== 'undefined' ? window.location.origin : CLUB.web;
+  const shareText = `🏍️ ${event.titulo}\n📅 ${fmtFecha(event.fecha)} · ${event.hora}\n📍 ${event.salida}\n${event.descripcion}\n\nInscríbete: ${shareOrigin}${ROUTES.eventos}/${event.id}`;
   const waShare = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   const realizado = event.estado === 'realizado';
   const cupoFull = event.inscritos >= event.cupos && event.cupos > 0;

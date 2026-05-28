@@ -622,7 +622,7 @@ function EventDrawerSlim({ event, onClose }: { event: EventItem | null; onClose:
   const mapsUrl =
     event.ubicacion_url ||
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.salida)}`;
-  const shareText = `🏍️ ${event.titulo}\n📅 ${event.fecha} · ${event.hora}\n📍 ${event.salida}\n${event.descripcion}\n\n${CLUB.web}/eventos`;
+  const shareText = `🏍️ ${event.titulo}\n📅 ${event.fecha} · ${event.hora}\n📍 ${event.salida}\n${event.descripcion}\n\n${CLUB.web}${ROUTES.eventos}/${event.id}`;
   const waShare = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   const inscripcionWa = event.contacto_tel
     ? `https://wa.me/${event.contacto_tel.replace(/\D/g, '')}?text=${encodeURIComponent(

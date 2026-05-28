@@ -5,6 +5,28 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "rewrites": [
+    {
+      "source": "/noticias/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|TelegramBot|Discordbot|Embedly|Pinterestbot|redditbot|Applebot|bingbot|Googlebot|baiduspider|YandexBot|DuckDuckBot|MJ12bot|AhrefsBot|Iframely|vkShare|W3C_Validator).*"
+        }
+      ],
+      "destination": "/api/og?type=noticia&id=:id"
+    },
+    {
+      "source": "/eventos/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|TelegramBot|Discordbot|Embedly|Pinterestbot|redditbot|Applebot|bingbot|Googlebot|baiduspider|YandexBot|DuckDuckBot|MJ12bot|AhrefsBot|Iframely|vkShare|W3C_Validator).*"
+        }
+      ],
+      "destination": "/api/og?type=evento&id=:id"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

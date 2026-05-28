@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { Hero } from '../../components/public/Hero';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
-import { IconChevronLeft, IconChevronRight } from '../../components/icons';
+import { IconChevronLeft, IconChevronRight, IconWhatsApp } from '../../components/icons';
+import { CLUB, ROUTES } from '../../lib/constants';
 import type { News } from '../../types';
 
 export function NoticiasPage() {
+  const params = useParams<{ id?: string }>();
+  const navigate = useNavigate();
   const [items, setItems] = useState<News[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<News | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -32,11 +35,28 @@ export function NoticiasPage() {
     };
   }, []);
 
-  // Vista de lectura del artículo completo
-  if (selected) {
+  // Vista de lectura del artículo completo (cuando la URL es /noticias/:id)
+  const selected = useMemo<News | null>(
+    () => (params.id && items ? items.find((n) => n.id === params.id) ?? null : null),
+    [params.id, items],
+  );
+
+  if (params.id) {
+    if (items === null) {
+      return (
+        <PublicLayout>
+          <div style={{ padding: '48px 32px' }}>
+            <Loading />
+          </div>
+        </PublicLayout>
+      );
+    }
+    if (!selected) {
+      return <Navigate to={ROUTES.noticias} replace />;
+    }
     return (
       <PublicLayout>
-        <ArticleReader news={selected} onBack={() => setSelected(null)} />
+        <ArticleReader news={selected} onBack={() => navigate(ROUTES.noticias)} />
       </PublicLayout>
     );
   }
@@ -65,7 +85,7 @@ export function NoticiasPage() {
           <EmptyState title={EMPTY_TEXTS.news.title} body={EMPTY_TEXTS.news.body} />
         ) : (
           <>
-            {lead ? <LeadArticle news={lead} onOpen={() => setSelected(lead)} /> : null}
+            {lead ? <LeadArticle news={lead} onOpen={() => navigate(`${ROUTES.noticias}/${lead.id}`)} /> : null}
 
             {rest.length > 0 ? (
               <>
@@ -81,7 +101,7 @@ export function NoticiasPage() {
                   }}
                 >
                   {rest.map((n) => (
-                    <NewsCard key={n.id} news={n} onOpen={() => setSelected(n)} />
+                    <NewsCard key={n.id} news={n} onOpen={() => navigate(`${ROUTES.noticias}/${n.id}`)} />
                   ))}
                 </div>
               </>
@@ -332,6 +352,8 @@ function ArticleReader({ news, onBack }: { news: News; onBack: () => void }) {
           )}
         </div>
 
+        <ShareRow news={news} />
+
         {news.tags && news.tags.length > 0 ? (
           <div style={{ marginTop: 36, paddingTop: 24, borderTop: '1px solid var(--borde)' }}>
             <Tags tags={news.tags} />
@@ -362,6 +384,71 @@ function ArticleReader({ news, onBack }: { news: News; onBack: () => void }) {
         </button>
       </div>
     </article>
+  );
+}
+
+function ShareRow({ news }: { news: News }) {
+  const [copied, setCopied] = useState(false);
+  const shareUrl = `${CLUB.web}${ROUTES.noticias}/${news.id}`;
+  const shareText = `🏍️ ${news.titulo}${news.resumen ? ` — ${news.resumen}` : ''}\n${shareUrl}`;
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      window.prompt('Copia el enlace:', shareUrl);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 32, display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+      <span className="kicker" style={{ marginRight: 6 }}>· Compartir esta nota</span>
+      <a
+        href={waUrl}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          background: '#25D366',
+          color: '#fff',
+          padding: '10px 16px',
+          textDecoration: 'none',
+          fontFamily: 'var(--font-cond)',
+          fontSize: 11,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          fontWeight: 600,
+        }}
+      >
+        <IconWhatsApp size={14} /> WhatsApp
+      </a>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'transparent',
+          color: 'var(--blanco)',
+          border: '1px solid var(--borde-strong)',
+          padding: '10px 16px',
+          cursor: 'pointer',
+          fontFamily: 'var(--font-cond)',
+          fontSize: 11,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          fontWeight: 600,
+        }}
+      >
+        {copied ? 'Copiado ✓' : 'Copiar enlace'}
+      </button>
+    </div>
   );
 }
 

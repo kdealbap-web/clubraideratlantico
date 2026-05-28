@@ -32,8 +32,10 @@ export function App() {
       <Route path={ROUTES.nosotros} element={<NosotrosPage />} />
       <Route path={ROUTES.reglamento} element={<ReglamentoPage />} />
       <Route path={ROUTES.eventos} element={<EventosPage />} />
+      <Route path={`${ROUTES.eventos}/:id`} element={<EventosPage />} />
       <Route path={ROUTES.galeria} element={<GaleriaPage />} />
       <Route path={ROUTES.noticias} element={<NoticiasPage />} />
+      <Route path={`${ROUTES.noticias}/:id`} element={<NoticiasPage />} />
       <Route path={ROUTES.unete} element={<UnetePage />} />
       <Route path={ROUTES.login} element={<LoginPage />} />
       <Route path={ROUTES.signup} element={<SignupPage />} />
