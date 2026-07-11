@@ -244,7 +244,6 @@ export function NosotrosPage() {
               idx={idx}
               short={g.short}
               label={g.label}
-              desc={g.desc}
               members={grouped.byGrupo[g.id]}
             />
           ))}
@@ -253,7 +252,6 @@ export function NosotrosPage() {
             idx={4}
             short="PO"
             label="Pilotos Oficiales"
-            desc="Miembros activos certificados que representan al club."
             members={grouped.pilotos}
           />
         </>
@@ -523,14 +521,12 @@ function GroupSection({
   idx,
   short,
   label,
-  desc,
   members,
 }: {
   id: string;
   idx: number;
   short: string;
   label: string;
-  desc: string;
   members: Member[];
 }) {
   return (
@@ -583,17 +579,6 @@ function GroupSection({
               </h3>
             </div>
           </div>
-          <p
-            style={{
-              color: 'var(--light)',
-              fontSize: 14.5,
-              lineHeight: 1.6,
-              margin: 0,
-              maxWidth: 500,
-            }}
-          >
-            {desc}
-          </p>
         </header>
 
         {members.length === 0 ? (
