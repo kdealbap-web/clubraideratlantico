@@ -3,11 +3,11 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
+import { uploadToBucket } from '../../lib/storage';
 import { FieldShell, TextField } from './Field';
 import { Btn } from '../admin/Buttons';
 import type { GalleryItem } from '../../types';
 
-const BUCKET = 'gallery';
 const MAX_VIDEO = 250 * 1024 * 1024; // 250 MB
 const MAX_POSTER = 25 * 1024 * 1024; // 25 MB
 const TIPOS = ['imagen', 'video'] as const;
@@ -34,16 +34,6 @@ interface EventOpt {
 interface Props {
   initial?: GalleryItem;
   onDone: () => void;
-}
-
-async function uploadToBucket(file: File): Promise<{ url: string; path: string }> {
-  const path = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { cacheControl: '3600', upsert: false });
-  if (error) throw error;
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return { url: data.publicUrl, path };
 }
 
 export function FormGaleria({ initial, onDone }: Props) {

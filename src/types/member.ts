@@ -26,6 +26,9 @@ export interface Member {
   estado: EstadoMiembro;
   rodadas: number;
 
+  foto_url: string | null;
+  foto_path: string | null;
+
   cedula: string | null;
   fecha_nac: string | null;
   tel: string | null;

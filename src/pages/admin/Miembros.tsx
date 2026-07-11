@@ -10,8 +10,17 @@ import { Drawer } from '../../components/admin/Drawer';
 import { Btn } from '../../components/admin/Buttons';
 import { PermisosLeyenda } from '../../components/admin/PermisosLeyenda';
 import { FormMiembro } from '../../components/forms/FormMiembro';
+import { BulkFotosPilotos } from '../../components/admin/BulkFotosPilotos';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
-import { IconCheck, IconClose, IconPlus, IconUsers } from '../../components/icons';
+import {
+  IconCalendar,
+  IconCheck,
+  IconClose,
+  IconImage,
+  IconPlus,
+  IconUpload,
+  IconUsers,
+} from '../../components/icons';
 import { ROL_LABELS, type Member, type Rol, type Solicitud } from '../../types';
 
 type Tab = 'miembros' | 'solicitudes';
@@ -124,6 +133,7 @@ function MembersList() {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<Member | null>(null);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const filtered = useMemo(() => {
     if (!rows) return null;
@@ -157,13 +167,22 @@ function MembersList() {
               color: 'var(--blanco)',
               display: 'grid',
               placeItems: 'center',
+              overflow: 'hidden',
               fontFamily: 'var(--font-cond)',
               fontWeight: 700,
               fontSize: 13,
               flexShrink: 0,
             }}
           >
-            {(r.alias || `${r.nombre[0] ?? ''}${r.apellido[0] ?? ''}`).slice(0, 2).toUpperCase()}
+            {r.foto_url ? (
+              <img
+                src={r.foto_url}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }}
+              />
+            ) : (
+              (r.alias || `${r.nombre[0] ?? ''}${r.apellido[0] ?? ''}`).slice(0, 2).toUpperCase()
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <strong>
@@ -236,6 +255,12 @@ function MembersList() {
       ),
     },
     {
+      key: 'perfil',
+      header: 'Perfil',
+      width: '150px',
+      render: (r) => <PerfilBadges m={r} />,
+    },
+    {
       key: 'moto',
       header: 'Moto',
       render: (r) => (
@@ -296,9 +321,14 @@ function MembersList() {
           <option value="inactivo">Inactivos</option>
         </select>
         {canManage ? (
-          <Btn icon={<IconPlus size={12} />} onClick={() => setCreating(true)}>
-            Nuevo miembro
-          </Btn>
+          <>
+            <Btn variant="ghost" icon={<IconUpload size={12} />} onClick={() => setImporting(true)}>
+              Importar fotos
+            </Btn>
+            <Btn icon={<IconPlus size={12} />} onClick={() => setCreating(true)}>
+              Nuevo miembro
+            </Btn>
+          </>
         ) : null}
       </div>
 
@@ -357,6 +387,19 @@ function MembersList() {
             }}
           />
         ) : null}
+      </Drawer>
+
+      <Drawer
+        open={importing}
+        title="Importar fotos de pilotos"
+        onClose={() => setImporting(false)}
+        width={680}
+      >
+        <BulkFotosPilotos
+          members={rows ?? []}
+          onClose={() => setImporting(false)}
+          onUploaded={() => void reload()}
+        />
       </Drawer>
     </>
   );
@@ -624,6 +667,78 @@ function Row({ k, v }: { k: string; v: string }) {
       </span>
       <span style={{ color: 'var(--blanco)', textAlign: 'right' }}>{v}</span>
     </div>
+  );
+}
+
+// Roles cuyo perfil (foto + fecha de nacimiento) debe estar completo.
+const ROLES_DESTACADOS: Rol[] = ['ADMINISTRADOR', 'LIDER', 'PILOTO_OFICIAL', 'CO_PILOTO'];
+
+function PerfilBadges({ m }: { m: Member }) {
+  if (!ROLES_DESTACADOS.includes(m.rol)) {
+    return <span style={{ color: 'var(--muted)' }}>—</span>;
+  }
+  const faltaFoto = !m.foto_url;
+  const faltaFecha = !m.fecha_nac;
+
+  if (!faltaFoto && !faltaFecha) {
+    return (
+      <MiniBadge color="var(--success)" bg="rgba(34,197,94,0.10)" title="Perfil completo">
+        <IconCheck size={11} /> Completo
+      </MiniBadge>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {faltaFoto ? (
+        <MiniBadge color="var(--warn)" bg="rgba(245,158,11,0.10)" title="Sin foto asignada">
+          <IconImage size={11} /> Sin foto
+        </MiniBadge>
+      ) : null}
+      {faltaFecha ? (
+        <MiniBadge
+          color="var(--rojo-light)"
+          bg="var(--rojo-soft)"
+          title="Sin fecha de nacimiento — no aparecerá en cumpleaños"
+        >
+          <IconCalendar size={11} /> Sin fecha
+        </MiniBadge>
+      ) : null}
+    </div>
+  );
+}
+
+function MiniBadge({
+  children,
+  color,
+  bg,
+  title,
+}: {
+  children: React.ReactNode;
+  color: string;
+  bg?: string;
+  title?: string;
+}) {
+  return (
+    <span
+      title={title}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontFamily: 'var(--font-cond)',
+        fontSize: 10,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        padding: '3px 7px',
+        border: `1px solid ${color}`,
+        color,
+        background: bg ?? 'transparent',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </span>
   );
 }
 

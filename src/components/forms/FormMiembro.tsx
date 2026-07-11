@@ -3,9 +3,12 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
+import { uploadToBucket } from '../../lib/storage';
+import { resizeImage } from '../../lib/image';
 import { FieldShell, TextField } from './Field';
 import { RolPicker } from '../admin/RolPicker';
 import { Btn } from '../admin/Buttons';
+import { IconUpload, IconClose } from '../icons';
 import type { Member, Rol, EstadoMiembro } from '../../types';
 import { GRUPOS_COMITE } from '../../types';
 
@@ -25,6 +28,8 @@ const MiembroSchema = z.object({
   nombre: z.string().min(1, 'Nombre obligatorio'),
   apellido: z.string().min(1, 'Apellido obligatorio'),
   email: z.string().email('Email inválido'),
+  foto_url: z.string().optional(),
+  foto_path: z.string().optional(),
   cedula: z.string().optional(),
   fecha_nac: z.string().optional(),
   tel: z.string().optional(),
@@ -63,6 +68,8 @@ interface Props {
 export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }: Props) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [fotoError, setFotoError] = useState<string | null>(null);
 
   const {
     register,
@@ -77,6 +84,8 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
           nombre: initial.nombre,
           apellido: initial.apellido,
           email: initial.email,
+          foto_url: initial.foto_url ?? '',
+          foto_path: initial.foto_path ?? '',
           cedula: initial.cedula ?? '',
           fecha_nac: initial.fecha_nac ?? '',
           tel: initial.tel ?? '',
@@ -109,6 +118,36 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
 
   const rol = watch('rol');
   const estado = watch('estado');
+  const fotoUrl = watch('foto_url');
+  const fotoInitials = (
+    watch('alias') || `${(watch('nombre') ?? '')[0] ?? ''}${(watch('apellido') ?? '')[0] ?? ''}`
+  )
+    .slice(0, 2)
+    .toUpperCase();
+
+  const handleFotoUpload = async (file: File) => {
+    setUploadingFoto(true);
+    setFotoError(null);
+    try {
+      const blob = await resizeImage(file, { maxDim: 1000, quality: 0.82, mime: 'image/webp' });
+      const ced = (watch('cedula') ?? '').replace(/\D/g, '');
+      const up = await uploadToBucket(blob, {
+        prefix: 'members/',
+        filename: `${ced || 'foto'}.webp`,
+      });
+      setValue('foto_url', up.url, { shouldDirty: true });
+      setValue('foto_path', up.path, { shouldDirty: true });
+    } catch (e) {
+      setFotoError(e instanceof Error ? e.message : 'Error subiendo la foto.');
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
+  const removeFoto = () => {
+    setValue('foto_url', '', { shouldDirty: true });
+    setValue('foto_path', '', { shouldDirty: true });
+  };
 
   const onSubmit: SubmitHandler<MiembroInput> = async (values) => {
     setServerError(null);
@@ -126,6 +165,8 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
       nombre: values.nombre,
       apellido: values.apellido,
       email: values.email,
+      foto_url: values.foto_url || null,
+      foto_path: values.foto_path || null,
       cedula: values.cedula || null,
       fecha_nac: values.fecha_nac || null,
       tel: values.tel || null,
@@ -183,6 +224,115 @@ export function FormMiembro({ initial, onDone, onDelete, canChangeRole = true }:
       }}
       style={{ display: 'flex', flexDirection: 'column', gap: 18 }}
     >
+      {/* Foto */}
+      <Section
+        title="Foto del piloto"
+        subtitle="Se muestra en el carnet, el listado del panel y la card pública de /nosotros."
+      >
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              flexShrink: 0,
+              border: '2px solid var(--rojo)',
+              background: 'linear-gradient(135deg, var(--rojo), #4a0f0f)',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            {fotoUrl ? (
+              <img
+                src={fotoUrl}
+                alt="Foto del miembro"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }}
+              />
+            ) : (
+              <span className="t-display" style={{ fontSize: 34, color: 'var(--blanco)' }}>
+                {fotoInitials || '?'}
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <label
+                htmlFor="foto-miembro"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '9px 14px',
+                  border: '1px solid var(--borde-strong)',
+                  background: 'var(--dark-2)',
+                  color: 'var(--blanco)',
+                  cursor: uploadingFoto ? 'wait' : 'pointer',
+                  fontFamily: 'var(--font-cond)',
+                  fontSize: 12,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                <IconUpload size={14} />
+                {uploadingFoto ? 'Subiendo…' : fotoUrl ? 'Cambiar foto' : 'Subir foto'}
+                <input
+                  id="foto-miembro"
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingFoto}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleFotoUpload(f);
+                    e.target.value = '';
+                  }}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              {fotoUrl ? (
+                <button
+                  type="button"
+                  onClick={removeFoto}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '9px 12px',
+                    border: '1px solid var(--borde)',
+                    background: 'transparent',
+                    color: 'var(--light)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-cond)',
+                    fontSize: 12,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <IconClose size={12} /> Quitar
+                </button>
+              ) : null}
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+              JPG o PNG · se optimiza a WebP automáticamente en tu navegador.
+            </span>
+          </div>
+        </div>
+        {fotoError ? (
+          <div
+            role="alert"
+            style={{
+              border: '1px solid var(--rojo)',
+              background: 'var(--rojo-soft)',
+              color: 'var(--rojo-light)',
+              padding: '10px 14px',
+              fontSize: 12.5,
+            }}
+          >
+            {fotoError}
+          </div>
+        ) : null}
+      </Section>
+
       {/* Datos básicos */}
       <Section title="Datos básicos">
         <Row>

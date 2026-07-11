@@ -3,6 +3,7 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
+import { uploadToBucket } from '../../lib/storage';
 import { FieldShell, TextField, TextAreaField } from './Field';
 import { Btn } from '../admin/Buttons';
 import { IconImage, IconUpload, IconClose } from '../icons';
@@ -11,7 +12,6 @@ import type { EventItem } from '../../types';
 const ESTADOS = ['borrador', 'publicado', 'realizado', 'cancelado'] as const;
 const TIPOS = ['Rodada', 'Evento', 'Capacitación'] as const;
 const DIFICULTADES = ['Fácil', 'Media', 'Alta', '—'] as const;
-const BUCKET = 'gallery';
 
 const EventoSchema = z.object({
   titulo: z.string().min(2, 'Título obligatorio'),
@@ -101,15 +101,9 @@ export function FormEvento({ initial, onDone }: Props) {
     setUploadingCover(true);
     setUploadError(null);
     try {
-      const path = `events/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
-      if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      setValue('cover_url', pub.publicUrl, { shouldDirty: true });
-      setCoverPreview(pub.publicUrl);
+      const up = await uploadToBucket(file, { prefix: 'events/' });
+      setValue('cover_url', up.url, { shouldDirty: true });
+      setCoverPreview(up.url);
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : 'Error subiendo imagen');
     } finally {

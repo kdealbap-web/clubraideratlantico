@@ -201,13 +201,22 @@ function CarnetView() {
           color: 'var(--blanco)',
           display: 'grid',
           placeItems: 'center',
+          overflow: 'hidden',
           fontFamily: 'var(--font-display)',
           fontSize: 64,
           letterSpacing: '0.02em',
           position: 'relative',
         }}
       >
-        {initials}
+        {member.foto_url ? (
+          <img
+            src={member.foto_url}
+            alt={`${member.nombre} ${member.apellido}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }}
+          />
+        ) : (
+          initials
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative' }}>

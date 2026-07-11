@@ -16,7 +16,7 @@ export function NosotrosPage() {
       const { data, error: e } = await supabase
         .from('members')
         .select(
-          'id, nombre, apellido, alias, rol, ciudad, moto_marca, moto_modelo, moto_color, moto_placa, ingreso, grupo, cargo, num, desde',
+          'id, nombre, apellido, alias, rol, ciudad, moto_marca, moto_modelo, moto_color, moto_placa, ingreso, grupo, cargo, num, desde, foto_url',
         )
         .eq('estado', 'activo')
         .in('rol', ['ADMINISTRADOR', 'LIDER', 'EDITOR', 'PILOTO_OFICIAL'])
@@ -740,6 +740,7 @@ function PlayerCard({ m, short }: { m: Member; short: string }) {
             background: 'linear-gradient(135deg, var(--rojo), #4a0f0f)',
             border: '2px solid var(--rojo)',
             borderRadius: '50%',
+            overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -749,12 +750,21 @@ function PlayerCard({ m, short }: { m: Member; short: string }) {
             zIndex: 1,
           }}
         >
-          <span
-            className="t-display"
-            style={{ fontSize: 52, color: 'var(--blanco)', letterSpacing: '0.02em' }}
-          >
-            {initials}
-          </span>
+          {m.foto_url ? (
+            <img
+              src={m.foto_url}
+              alt={`${m.nombre} ${m.apellido}`}
+              loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }}
+            />
+          ) : (
+            <span
+              className="t-display"
+              style={{ fontSize: 52, color: 'var(--blanco)', letterSpacing: '0.02em' }}
+            >
+              {initials}
+            </span>
+          )}
         </div>
       </div>
 

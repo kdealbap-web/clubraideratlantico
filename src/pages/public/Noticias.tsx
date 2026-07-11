@@ -4,9 +4,9 @@ import { PublicLayout } from '../../components/public/PublicLayout';
 import { Hero } from '../../components/public/Hero';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
-import { IconChevronLeft, IconChevronRight, IconWhatsApp } from '../../components/icons';
+import { IconChevronLeft, IconChevronRight, IconClose, IconWhatsApp } from '../../components/icons';
 import { CLUB, ROUTES } from '../../lib/constants';
-import type { News } from '../../types';
+import type { News, NewsImage } from '../../types';
 
 export function NoticiasPage() {
   const params = useParams<{ id?: string }>();
@@ -352,6 +352,8 @@ function ArticleReader({ news, onBack }: { news: News; onBack: () => void }) {
           )}
         </div>
 
+        <NewsGallery images={news.galeria ?? []} />
+
         <ShareRow news={news} />
 
         {news.tags && news.tags.length > 0 ? (
@@ -386,6 +388,161 @@ function ArticleReader({ news, onBack }: { news: News; onBack: () => void }) {
     </article>
   );
 }
+
+// ─── Galería del artículo con lightbox ───────────────────────────────────
+function NewsGallery({ images }: { images: NewsImage[] }) {
+  const [open, setOpen] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (open === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(null);
+      else if (e.key === 'ArrowRight') setOpen((i) => (i === null ? i : (i + 1) % images.length));
+      else if (e.key === 'ArrowLeft')
+        setOpen((i) => (i === null ? i : (i - 1 + images.length) % images.length));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, images.length]);
+
+  if (!images || images.length === 0) return null;
+
+  const current = open !== null ? images[open] : null;
+
+  return (
+    <div style={{ marginTop: 44 }}>
+      <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <span style={{ width: 8, height: 8, background: 'var(--rojo)', borderRadius: '50%' }} />
+        <span className="kicker">· Galería</span>
+      </header>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: 10,
+        }}
+      >
+        {images.map((img, i) => (
+          <button
+            key={img.path || `n-${i}`}
+            type="button"
+            onClick={() => setOpen(i)}
+            aria-label={img.caption || `Ver imagen ${i + 1}`}
+            style={{
+              position: 'relative',
+              paddingTop: '75%',
+              border: '1px solid var(--borde)',
+              background: `url('${img.url}') center/cover`,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          />
+        ))}
+      </div>
+
+      {current ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setOpen(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'rgba(0,0,0,0.9)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <button type="button" onClick={() => setOpen(null)} aria-label="Cerrar" style={lightboxClose}>
+            <IconClose size={20} />
+          </button>
+          {images.length > 1 ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((i) => (i === null ? i : (i - 1 + images.length) % images.length));
+              }}
+              aria-label="Anterior"
+              style={{ ...lightboxNav, left: 12 }}
+            >
+              <IconChevronLeft size={22} />
+            </button>
+          ) : null}
+          <img
+            src={current.url}
+            alt={current.caption ?? ''}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '92vw',
+              maxHeight: '82vh',
+              objectFit: 'contain',
+              boxShadow: '0 10px 50px rgba(0,0,0,0.6)',
+            }}
+          />
+          {current.caption ? (
+            <div
+              style={{
+                color: 'var(--light)',
+                fontSize: 13,
+                marginTop: 14,
+                textAlign: 'center',
+                maxWidth: 680,
+              }}
+            >
+              {current.caption}
+            </div>
+          ) : null}
+          {images.length > 1 ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((i) => (i === null ? i : (i + 1) % images.length));
+              }}
+              aria-label="Siguiente"
+              style={{ ...lightboxNav, right: 12 }}
+            >
+              <IconChevronRight size={22} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const lightboxClose = {
+  position: 'absolute',
+  top: 16,
+  right: 16,
+  width: 44,
+  height: 44,
+  background: 'rgba(0,0,0,0.6)',
+  border: '1px solid rgba(255,255,255,0.3)',
+  color: 'var(--blanco)',
+  cursor: 'pointer',
+  display: 'grid',
+  placeItems: 'center',
+} as const;
+
+const lightboxNav = {
+  position: 'absolute',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  width: 44,
+  height: 44,
+  background: 'rgba(0,0,0,0.6)',
+  border: '1px solid rgba(255,255,255,0.3)',
+  color: 'var(--blanco)',
+  cursor: 'pointer',
+  display: 'grid',
+  placeItems: 'center',
+} as const;
 
 function ShareRow({ news }: { news: News }) {
   const [copied, setCopied] = useState(false);
