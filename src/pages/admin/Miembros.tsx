@@ -671,7 +671,8 @@ function Row({ k, v }: { k: string; v: string }) {
 }
 
 // Roles cuyo perfil (foto + fecha de nacimiento) debe estar completo.
-const ROLES_DESTACADOS: Rol[] = ['ADMINISTRADOR', 'LIDER', 'PILOTO_OFICIAL', 'CO_PILOTO'];
+// Mismo criterio que los cumpleaños: todo el personal salvo General y Aspirante.
+const ROLES_DESTACADOS: Rol[] = ['ADMINISTRADOR', 'LIDER', 'EDITOR', 'PILOTO_OFICIAL', 'CO_PILOTO'];
 
 function PerfilBadges({ m }: { m: Member }) {
   if (!ROLES_DESTACADOS.includes(m.rol)) {

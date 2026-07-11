@@ -380,6 +380,15 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
         />
       ))}
 
+      {current ? (
+        <img
+          key={`photo-${current.id}`}
+          className="gallery-hero-photo"
+          src={coverUrl(current)}
+          alt={current.label}
+        />
+      ) : null}
+
       <div
         aria-hidden="true"
         style={{
@@ -421,12 +430,12 @@ function GalleryHero({ items }: { items: GalleryItem[] }) {
           <h1
             className="t-display"
             style={{
-              fontSize: 'clamp(40px, 8vw, 96px)',
-              lineHeight: 0.95,
+              fontSize: 'clamp(18px, 2.4vw, 28px)',
+              lineHeight: 1.05,
               margin: 0,
               color: 'var(--blanco)',
-              maxWidth: 1100,
-              textShadow: '0 4px 30px rgba(0,0,0,0.5)',
+              maxWidth: 900,
+              textShadow: '0 2px 14px rgba(0,0,0,0.7)',
             }}
           >
             {current.label}
