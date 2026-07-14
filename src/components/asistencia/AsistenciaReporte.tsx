@@ -34,7 +34,9 @@ export function AsistenciaReporte({ refreshKey }: { refreshKey: number }) {
       const [{ data: asis, error: e1 }, { data: mem, error: e2 }] = await Promise.all([
         supabase
           .from('asistencias')
-          .select('id, fecha, hora, origen, member_id, members ( nombre, apellido, rol )')
+          // asistencias tiene 2 FKs a members (member_id y registrado_por): hay que
+          // desambiguar el embed indicando la columna member_id.
+          .select('id, fecha, hora, origen, member_id, members!member_id ( nombre, apellido, rol )')
           .order('fecha', { ascending: false })
           .order('hora', { ascending: true }),
         supabase
