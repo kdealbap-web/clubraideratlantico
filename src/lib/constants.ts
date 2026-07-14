@@ -60,5 +60,6 @@ export const ROUTES = {
   adminNoticias: '/admin/noticias',
   adminConfiguracion: '/admin/configuracion',
   adminCronograma: '/admin/cronograma',
+  adminAsistencia: '/admin/asistencia',
   portal: '/portal',
 } as const;

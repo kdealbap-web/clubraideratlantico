@@ -12,7 +12,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "seed:passwords": "node scripts/seed-passwords.mjs",
     "import:csv": "node scripts/import-csv.mjs",
-    "import:csv:dry": "node scripts/import-csv.mjs --dry-run"
+    "import:csv:dry": "node scripts/import-csv.mjs --dry-run",
+    "import:asistencias": "node scripts/import-asistencias.mjs",
+    "import:asistencias:dry": "node scripts/import-asistencias.mjs --dry-run"
   },
   "dependencies": {
     "@fontsource/barlow": "^5.0.14",
@@ -21,6 +23,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@supabase/supabase-js": "^2.45.4",
     "html-to-image": "^1.11.13",
+    "html5-qrcode": "^2.3.8",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",

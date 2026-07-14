@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
-type TableName = 'members' | 'solicitudes' | 'events' | 'news' | 'gallery' | 'settings' | 'activity_log';
+type TableName =
+  | 'members'
+  | 'solicitudes'
+  | 'events'
+  | 'news'
+  | 'gallery'
+  | 'settings'
+  | 'activity_log'
+  | 'asistencias';
 
 interface UseTableOpts {
   order?: { column: string; ascending?: boolean };

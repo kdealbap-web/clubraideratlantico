@@ -6,17 +6,22 @@ import { CLUB, ROUTES } from '../../lib/constants';
 import { PublicNav } from '../../components/public/PublicNav';
 import { Footer } from '../../components/public/Footer';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { IconBike, IconCalendar, IconHelmet, IconQR, IconRoute } from '../../components/icons';
+import { IconBike, IconCalendar, IconCheck, IconHelmet, IconQR, IconRoute } from '../../components/icons';
 import { Btn } from '../../components/admin/Buttons';
 import { Drawer } from '../../components/admin/Drawer';
 import { FieldShell, TextField } from '../../components/forms/Field';
+import { AsistenciaPanel } from '../../components/asistencia/AsistenciaPanel';
 import { ROL_LABELS, type EventItem } from '../../types';
 
-type Tab = 'carnet' | 'rodadas' | 'datos';
+type Tab = 'carnet' | 'rodadas' | 'datos' | 'asistencia';
 
 export function PortalPage() {
   const { member, signOut } = useAuth();
   const [tab, setTab] = useState<Tab>('carnet');
+  const puedeAsistencia =
+    member != null &&
+    member.estado === 'activo' &&
+    (member.rol === 'ADMINISTRADOR' || member.rol === 'LIDER' || member.grupo === 'disciplina');
 
   if (!member) {
     return (
@@ -102,11 +107,21 @@ export function PortalPage() {
           <TabBtn active={tab === 'datos'} onClick={() => setTab('datos')} icon={<IconHelmet size={14} />}>
             Mis datos
           </TabBtn>
+          {puedeAsistencia ? (
+            <TabBtn
+              active={tab === 'asistencia'}
+              onClick={() => setTab('asistencia')}
+              icon={<IconCheck size={14} />}
+            >
+              Asistencia
+            </TabBtn>
+          ) : null}
         </nav>
 
         {tab === 'carnet' ? <CarnetView /> : null}
         {tab === 'rodadas' ? <RodadasView /> : null}
         {tab === 'datos' ? <DatosView /> : null}
+        {tab === 'asistencia' && puedeAsistencia ? <AsistenciaView memberId={member.id} /> : null}
       </main>
 
       <Footer />
@@ -162,7 +177,9 @@ function CarnetView() {
     .slice(0, 2)
     .toUpperCase();
 
-  const qrPayload = `raider:${member.id}:${member.cedula}`;
+  // El QR codifica la cédula del piloto (compatible con el sistema anterior de
+  // asistencia, donde el código escaneado es la cédula).
+  const qrPayload = (member.cedula ?? '').replace(/\D/g, '') || member.id;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&bgcolor=0a0a0a&color=cc2222&data=${encodeURIComponent(
     qrPayload,
   )}`;
@@ -280,6 +297,32 @@ function CarnetField({ k, v }: { k: string; v: string }) {
         {k}
       </span>
       <span style={{ color: 'var(--blanco)', fontSize: 14 }}>{v}</span>
+    </div>
+  );
+}
+
+function AsistenciaView({ memberId }: { memberId: string }) {
+  return (
+    <div
+      style={{
+        background: 'var(--dark-1)',
+        border: '1px solid var(--borde)',
+        padding: 24,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+    >
+      <div>
+        <h2 className="t-display" style={{ fontSize: 24, color: 'var(--blanco)', margin: 0 }}>
+          Registrar asistencia
+        </h2>
+        <p style={{ color: 'var(--light)', fontSize: 13.5, margin: '6px 0 0' }}>
+          Selecciona la actividad y escanea el QR del carnet de cada piloto. El escáner solo se
+          habilita el día del evento.
+        </p>
+      </div>
+      <AsistenciaPanel registradoPor={memberId} />
     </div>
   );
 }
