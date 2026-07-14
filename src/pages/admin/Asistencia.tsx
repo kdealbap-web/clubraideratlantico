@@ -3,6 +3,7 @@ import { useAuth } from '../../lib/auth';
 import { PageHeader } from '../../components/admin/PageHeader';
 import { AsistenciaPanel } from '../../components/asistencia/AsistenciaPanel';
 import { AsistenciaReporte } from '../../components/asistencia/AsistenciaReporte';
+import { AsistenciaHistorico } from '../../components/asistencia/AsistenciaHistorico';
 
 export function AsistenciaAdminPage() {
   const { member } = useAuth();
@@ -46,6 +47,13 @@ export function AsistenciaAdminPage() {
           subtitle="Presentes e inasistentes por actividad, incluyendo el histórico importado."
         >
           <AsistenciaReporte refreshKey={refreshKey} />
+        </Card>
+
+        <Card
+          title="Histórico por piloto"
+          subtitle="Matriz de todas las actividades por piloto. Descargable en CSV."
+        >
+          <AsistenciaHistorico refreshKey={refreshKey} />
         </Card>
       </div>
     </section>

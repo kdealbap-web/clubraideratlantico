@@ -6,14 +6,23 @@ import { CLUB, ROUTES } from '../../lib/constants';
 import { PublicNav } from '../../components/public/PublicNav';
 import { Footer } from '../../components/public/Footer';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { IconBike, IconCalendar, IconCheck, IconHelmet, IconQR, IconRoute } from '../../components/icons';
+import {
+  IconBike,
+  IconCalendar,
+  IconCheck,
+  IconDownload,
+  IconHelmet,
+  IconQR,
+  IconRoute,
+} from '../../components/icons';
 import { Btn } from '../../components/admin/Buttons';
 import { Drawer } from '../../components/admin/Drawer';
 import { FieldShell, TextField } from '../../components/forms/Field';
 import { AsistenciaPanel } from '../../components/asistencia/AsistenciaPanel';
+import { downloadCSV } from '../../lib/csv';
 import { ROL_LABELS, type EventItem } from '../../types';
 
-type Tab = 'carnet' | 'rodadas' | 'datos' | 'asistencia';
+type Tab = 'carnet' | 'rodadas' | 'datos' | 'miasistencia' | 'asistencia';
 
 export function PortalPage() {
   const { member, signOut } = useAuth();
@@ -107,13 +116,20 @@ export function PortalPage() {
           <TabBtn active={tab === 'datos'} onClick={() => setTab('datos')} icon={<IconHelmet size={14} />}>
             Mis datos
           </TabBtn>
+          <TabBtn
+            active={tab === 'miasistencia'}
+            onClick={() => setTab('miasistencia')}
+            icon={<IconCalendar size={14} />}
+          >
+            Mi asistencia
+          </TabBtn>
           {puedeAsistencia ? (
             <TabBtn
               active={tab === 'asistencia'}
               onClick={() => setTab('asistencia')}
               icon={<IconCheck size={14} />}
             >
-              Asistencia
+              Registrar
             </TabBtn>
           ) : null}
         </nav>
@@ -121,6 +137,9 @@ export function PortalPage() {
         {tab === 'carnet' ? <CarnetView /> : null}
         {tab === 'rodadas' ? <RodadasView /> : null}
         {tab === 'datos' ? <DatosView /> : null}
+        {tab === 'miasistencia' ? (
+          <MiAsistenciaView memberId={member.id} nombre={member.nombre} apellido={member.apellido} />
+        ) : null}
         {tab === 'asistencia' && puedeAsistencia ? <AsistenciaView memberId={member.id} /> : null}
       </main>
 
@@ -297,6 +316,171 @@ function CarnetField({ k, v }: { k: string; v: string }) {
         {k}
       </span>
       <span style={{ color: 'var(--blanco)', fontSize: 14 }}>{v}</span>
+    </div>
+  );
+}
+
+interface MiAsis {
+  id: string;
+  fecha: string;
+  hora: string | null;
+  event_id: string | null;
+  events: { titulo: string; tipo: string } | null;
+}
+
+function MiAsistenciaView({
+  memberId,
+  nombre,
+  apellido,
+}: {
+  memberId: string;
+  nombre: string;
+  apellido: string;
+}) {
+  const [rows, setRows] = useState<MiAsis[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error: e } = await supabase
+        .from('asistencias')
+        .select('id, fecha, hora, event_id, events!event_id ( titulo, tipo )')
+        .eq('member_id', memberId)
+        .order('fecha', { ascending: false })
+        .order('hora', { ascending: false });
+      if (!active) return;
+      if (e) {
+        setError(e.message);
+        setRows([]);
+        return;
+      }
+      const raw = (data ?? []) as Array<Record<string, unknown>>;
+      const list: MiAsis[] = raw.map((r) => {
+        const evField = r.events;
+        const ev = (Array.isArray(evField) ? evField[0] : evField) as MiAsis['events'] | undefined;
+        return {
+          id: String(r.id),
+          fecha: String(r.fecha),
+          hora: (r.hora as string | null) ?? null,
+          event_id: (r.event_id as string | null) ?? null,
+          events: ev ?? null,
+        };
+      });
+      setRows(list);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [memberId]);
+
+  const exportCSV = () => {
+    if (!rows) return;
+    const header = ['Fecha', 'Hora', 'Actividad'];
+    const body = rows.map((r) => [
+      r.fecha.split('-').reverse().join('/'),
+      r.hora ?? '',
+      r.events?.titulo ?? 'Reunión / actividad',
+    ]);
+    const nombreArchivo = `mi-asistencia-${nombre}-${apellido}`
+      .replace(/\s+/g, '-')
+      .toLowerCase();
+    downloadCSV(`${nombreArchivo}.csv`, [header, ...body]);
+  };
+
+  return (
+    <div
+      style={{
+        background: 'var(--dark-1)',
+        border: '1px solid var(--borde)',
+        padding: 24,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h2 className="t-display" style={{ fontSize: 24, color: 'var(--blanco)', margin: 0 }}>
+            Mi asistencia
+          </h2>
+          <p style={{ color: 'var(--light)', fontSize: 13.5, margin: '6px 0 0' }}>
+            Tus registros de asistencia a rodadas, eventos y reuniones del club.
+          </p>
+        </div>
+        {rows && rows.length > 0 ? (
+          <Btn type="button" variant="ghost" icon={<IconDownload size={13} />} onClick={exportCSV}>
+            Descargar CSV
+          </Btn>
+        ) : null}
+      </div>
+
+      {error ? (
+        <div
+          role="alert"
+          style={{
+            border: '1px solid var(--rojo)',
+            background: 'var(--rojo-soft)',
+            color: 'var(--rojo-light)',
+            padding: '12px 14px',
+            fontSize: 13,
+          }}
+        >
+          Supabase: {error}
+        </div>
+      ) : rows === null ? (
+        <div style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando…</div>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          title="Aún no tienes asistencias"
+          body="Cuando el equipo escanee tu carnet en una actividad, aparecerá aquí tu registro."
+        />
+      ) : (
+        <>
+          <div style={{ color: 'var(--muted)', fontSize: 13 }}>
+            Total:{' '}
+            <strong style={{ color: 'var(--success)', fontVariantNumeric: 'tabular-nums' }}>
+              {rows.length}
+            </strong>{' '}
+            {rows.length === 1 ? 'asistencia' : 'asistencias'}
+          </div>
+          <div style={{ border: '1px solid var(--borde)' }}>
+            {rows.map((r, i) => (
+              <div
+                key={r.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  padding: '11px 14px',
+                  borderTop: i === 0 ? 'none' : '1px solid var(--borde)',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ color: 'var(--blanco)', fontSize: 14 }}>
+                    {r.events?.titulo ?? 'Reunión / actividad'}
+                  </div>
+                  {r.events?.tipo ? (
+                    <div style={{ color: 'var(--muted)', fontSize: 11 }}>{r.events.tipo}</div>
+                  ) : null}
+                </div>
+                <div
+                  style={{
+                    textAlign: 'right',
+                    color: 'var(--light)',
+                    fontSize: 13,
+                    fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {r.fecha.split('-').reverse().join('/')}
+                  {r.hora ? ` · ${r.hora.slice(0, 5)}` : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
