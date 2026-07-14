@@ -801,44 +801,24 @@ function PlayerCard({ m, short }: { m: Member; short: string }) {
             paddingTop: 10,
             borderTop: '1px solid var(--borde)',
             display: 'flex',
-            justifyContent: 'space-between',
+            flexDirection: 'column',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div
-              className="kicker"
-              style={{ fontSize: 8, color: 'var(--muted)', letterSpacing: '0.14em' }}
-            >
-              Placa
-            </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-cond)',
-                fontSize: 12,
-                color: 'var(--blanco)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {m.moto_placa ?? '—'}
-            </div>
+          <div
+            className="kicker"
+            style={{ fontSize: 8, color: 'var(--muted)', letterSpacing: '0.14em' }}
+          >
+            Desde
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <div
-              className="kicker"
-              style={{ fontSize: 8, color: 'var(--muted)', letterSpacing: '0.14em' }}
-            >
-              Desde
-            </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-cond)',
-                fontSize: 12,
-                color: 'var(--blanco)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {desde}
-            </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-cond)',
+              fontSize: 12,
+              color: 'var(--blanco)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {desde}
           </div>
         </div>
       </div>

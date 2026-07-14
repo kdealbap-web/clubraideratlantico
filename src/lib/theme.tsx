@@ -1,5 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { STORAGE_KEYS } from './constants';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 
 export type Theme = 'dark' | 'light';
 
@@ -11,41 +10,22 @@ interface ThemeCtx {
 
 const Ctx = createContext<ThemeCtx | null>(null);
 
-function readInitial(): Theme {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEYS.theme);
-    if (stored === 'dark' || stored === 'light') return stored;
-  } catch {
-    /* SSR or storage blocked */
-  }
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
-    return 'light';
-  }
-  return 'dark';
-}
-
+// Tema OSCURO forzado. El club usa únicamente el tema oscuro; el modo claro
+// quedó deshabilitado. Se mantiene la API (theme/toggle/set) por compatibilidad
+// con los consumidores existentes, pero el DOM siempre permanece en oscuro
+// (sin atributo data-theme = tokens oscuros por defecto).
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(readInitial);
-
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'light') {
-      root.setAttribute('data-theme', 'light');
-    } else {
-      root.removeAttribute('data-theme');
-    }
-    try {
-      window.localStorage.setItem(STORAGE_KEYS.theme, theme);
-    } catch {
-      /* storage blocked */
-    }
-  }, [theme]);
-
-  const toggle = useCallback(() => {
-    setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+    document.documentElement.removeAttribute('data-theme');
   }, []);
 
-  return <Ctx.Provider value={{ theme, toggle, set: setTheme }}>{children}</Ctx.Provider>;
+  const value: ThemeCtx = {
+    theme: 'dark',
+    toggle: () => {},
+    set: () => {},
+  };
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useTheme(): ThemeCtx {

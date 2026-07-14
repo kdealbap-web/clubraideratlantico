@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PublicLayout } from '../../components/public/PublicLayout';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
+import { CoverImage } from '../../components/ui/CoverImage';
 import { RodadaVideos } from '../../components/media/RodadaVideos';
 import type { EventItem, TipoEvento } from '../../types';
 import { CLUB, ROUTES } from '../../lib/constants';
@@ -80,8 +81,17 @@ export function EventosPage() {
 
   const rest = useMemo(() => {
     if (!filtered) return null;
-    return next ? filtered.filter((e) => e.id !== next.id) : filtered;
-  }, [filtered, next]);
+    const withoutNext = next ? filtered.filter((e) => e.id !== next.id) : filtered;
+    // Próximas primero (fecha más cercana arriba); las ya pasadas al final
+    // (más reciente primero).
+    const upcoming = withoutNext
+      .filter((e) => e.fecha >= today)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    const past = withoutNext
+      .filter((e) => e.fecha < today)
+      .sort((a, b) => b.fecha.localeCompare(a.fecha));
+    return [...upcoming, ...past];
+  }, [filtered, next, today]);
 
   const stats = useMemo(() => {
     if (!events) return null;
@@ -455,15 +465,7 @@ function FeaturedEvent({ event, onOpen }: { event: EventItem; onOpen: () => void
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div
-        style={{
-          position: 'relative',
-          minHeight: 320,
-          background: event.cover_url
-            ? `url('${event.cover_url}') center/cover`
-            : 'linear-gradient(135deg, var(--imgph-1), var(--imgph-3))',
-        }}
-      >
+      <CoverImage url={event.cover_url} alt={event.titulo} minHeight={320}>
         <div
           aria-hidden="true"
           style={{
@@ -503,7 +505,7 @@ function FeaturedEvent({ event, onOpen }: { event: EventItem; onOpen: () => void
             {year}
           </div>
         </div>
-      </div>
+      </CoverImage>
 
       <div
         style={{
@@ -665,15 +667,7 @@ function EventCard({ ev, onClick }: { ev: EventItem; onClick: () => void }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div
-        style={{
-          position: 'relative',
-          paddingTop: '56%',
-          background: ev.cover_url
-            ? `url('${ev.cover_url}') center/cover`
-            : 'linear-gradient(135deg, var(--imgph-1), var(--imgph-3))',
-        }}
-      >
+      <CoverImage url={ev.cover_url} alt={ev.titulo} ratio={56}>
         {!ev.cover_url ? (
           <div
             style={{
@@ -722,7 +716,7 @@ function EventCard({ ev, onClick }: { ev: EventItem; onClick: () => void }) {
             Cupos llenos
           </div>
         ) : null}
-      </div>
+      </CoverImage>
 
       <div
         style={{

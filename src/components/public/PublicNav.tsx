@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { CLUB, ROUTES } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
-import { ThemePill } from '../chrome/ThemePill';
 import { Logo } from '../chrome/Logo';
 import { IconClose, IconWhatsApp } from '../icons';
 import type { EventItem } from '../../types';
@@ -75,7 +74,7 @@ export function PublicNav() {
         }}
       >
         <Link to={ROUTES.home} style={{ textDecoration: 'none' }}>
-          <Logo size={36} />
+          <Logo size={36} withWordmark={false} />
         </Link>
 
         <nav
@@ -110,7 +109,6 @@ export function PublicNav() {
           className="public-nav-actions"
           style={{ display: 'flex', alignItems: 'center', gap: 10 }}
         >
-          <ThemePill />
           <Link
             to={ROUTES.login}
             style={{
@@ -303,7 +301,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
           borderBottom: '1px solid var(--borde)',
         }}
       >
-        <Logo size={36} />
+        <Logo size={36} withWordmark={false} />
         <button
           type="button"
           onClick={onClose}
@@ -427,7 +425,6 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
             borderTop: '1px solid var(--borde)',
           }}
         >
-          <ThemePill />
           <a
             href={CLUB.social.whatsapp.url}
             target="_blank"

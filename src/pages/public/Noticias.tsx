@@ -4,6 +4,7 @@ import { PublicLayout } from '../../components/public/PublicLayout';
 import { Hero } from '../../components/public/Hero';
 import { supabase } from '../../lib/supabase';
 import { EmptyState, EMPTY_TEXTS } from '../../components/ui/EmptyState';
+import { CoverImage } from '../../components/ui/CoverImage';
 import { IconChevronLeft, IconChevronRight, IconClose, IconWhatsApp } from '../../components/icons';
 import { CLUB, ROUTES } from '../../lib/constants';
 import type { News, NewsImage } from '../../types';
@@ -134,15 +135,7 @@ function LeadArticle({ news, onOpen }: { news: News; onOpen: () => void }) {
       }}
       className="news-lead"
     >
-      <div
-        style={{
-          minHeight: 320,
-          background: news.cover_url
-            ? `url('${news.cover_url}') center/cover`
-            : 'linear-gradient(135deg, var(--imgph-1), var(--imgph-3))',
-        }}
-        aria-hidden={!news.cover_url}
-      />
+      <CoverImage url={news.cover_url} alt={news.titulo} minHeight={320} />
       <div style={{ padding: 'clamp(24px, 4vw, 44px)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 14 }}>
         <div className="t-cond-up" style={{ fontSize: 11, color: 'var(--rojo)', letterSpacing: '0.18em' }}>
           Portada · {fmtDate(news.fecha)} · {news.autor}
@@ -210,15 +203,7 @@ function NewsCard({ news, onOpen }: { news: News; onOpen: () => void }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <div
-        style={{
-          paddingTop: '52%',
-          background: news.cover_url
-            ? `url('${news.cover_url}') center/cover`
-            : 'linear-gradient(135deg, var(--imgph-1), var(--imgph-3))',
-        }}
-        aria-hidden={!news.cover_url}
-      />
+      <CoverImage url={news.cover_url} alt={news.titulo} ratio={52} />
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
         <div className="t-cond-up" style={{ fontSize: 10, color: 'var(--rojo)', letterSpacing: '0.16em' }}>
           {fmtDate(news.fecha)} · {news.autor}

@@ -175,6 +175,13 @@ function PosterContents({
   const monthFontSize = Math.min(260, Math.round(980 / (Math.max(mes.length, 1) * 0.58)));
   const left = theme.align === 'left';
 
+  // Escala las filas según cuántos eventos hay para que siempre quepan y el
+  // footer (ahora en flujo) nunca se recorte, incluso con >6 eventos.
+  const n = events.length;
+  const totalAt1 = n > 0 ? n * 92 + (n - 1) * 30 : 0;
+  const rowScale = n > 0 ? Math.max(0.5, Math.min(1, 860 / totalAt1)) : 1;
+  const listGap = Math.round(30 * rowScale);
+
   return (
     <>
       {/* Background blurred logo */}
@@ -208,10 +215,20 @@ function PosterContents({
         }}
       />
 
+      {/* Contenido en columna: header arriba, lista flexible al centro, footer abajo (en flujo) */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
       {/* Logo + título */}
       <div
         style={{
           position: 'relative',
+          flexShrink: 0,
           paddingTop: 120,
           paddingLeft: left ? 90 : 0,
           paddingRight: left ? 90 : 0,
@@ -277,11 +294,14 @@ function PosterContents({
       <div
         style={{
           position: 'relative',
-          marginTop: 50,
-          padding: '0 90px',
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          padding: '40px 90px 0',
           display: 'flex',
           flexDirection: 'column',
-          gap: 30,
+          justifyContent: 'center',
+          gap: listGap,
         }}
       >
         {events.length === 0 ? (
@@ -299,18 +319,16 @@ function PosterContents({
             · Por publicar próximamente ·
           </div>
         ) : (
-          events.map((e) => <PosterEventRow key={e.id} ev={e} theme={theme} />)
+          events.map((e) => <PosterEventRow key={e.id} ev={e} theme={theme} scale={rowScale} />)
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer (en flujo, siempre visible) */}
       <div
         style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          padding: '40px 60px 60px',
+          position: 'relative',
+          flexShrink: 0,
+          padding: '30px 60px 60px',
           display: 'flex',
           flexDirection: 'column',
           gap: 28,
@@ -406,11 +424,20 @@ function PosterContents({
           {tagline}
         </div>
       </div>
+      </div>
     </>
   );
 }
 
-function PosterEventRow({ ev, theme }: { ev: EventItem; theme: PosterTheme }) {
+function PosterEventRow({
+  ev,
+  theme,
+  scale = 1,
+}: {
+  ev: EventItem;
+  theme: PosterTheme;
+  scale?: number;
+}) {
   const d = new Date(ev.fecha);
   const dia = Number.isNaN(d.getTime()) ? '—' : d.getUTCDate();
   const dow = Number.isNaN(d.getTime()) ? '—' : (DIAS_CORTO[d.getUTCDay()] ?? '—');
@@ -423,21 +450,23 @@ function PosterEventRow({ ev, theme }: { ev: EventItem; theme: PosterTheme }) {
 
   const chipBg = cancelado ? withAlpha('#FFFFFF', 0.16) : realizado ? withAlpha(theme.accent, 0.5) : theme.accent;
 
+  const s = (v: number) => Math.round(v * scale);
+
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32, opacity: muted ? 0.82 : 1 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: s(32), opacity: muted ? 0.82 : 1 }}>
       <div
         style={{
           flexShrink: 0,
           background: chipBg,
           color: '#FFFFFF',
-          padding: '18px 32px',
+          padding: `${s(18)}px ${s(32)}px`,
           borderRadius: chipRadius(theme.chip),
           clipPath: chipClipPath(theme.chip),
-          minWidth: 200,
+          minWidth: s(200),
           textAlign: 'center',
           fontFamily: 'var(--font-cond)',
           fontWeight: 700,
-          fontSize: 38,
+          fontSize: s(38),
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
           boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
@@ -445,13 +474,13 @@ function PosterEventRow({ ev, theme }: { ev: EventItem; theme: PosterTheme }) {
       >
         {dow}. {String(dia).padStart(2, '0')}
       </div>
-      <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
+      <div style={{ flex: 1, minWidth: 0, paddingTop: s(4) }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div
             style={{
               fontFamily: 'var(--font-cond)',
               fontWeight: 700,
-              fontSize: 50,
+              fontSize: s(50),
               color: cancelado ? 'rgba(255,255,255,0.7)' : '#FFFFFF',
               letterSpacing: '0.02em',
               textTransform: 'uppercase',
@@ -471,9 +500,9 @@ function PosterEventRow({ ev, theme }: { ev: EventItem; theme: PosterTheme }) {
             style={{
               fontFamily: 'var(--font-display)',
               fontStyle: 'italic',
-              fontSize: 28,
+              fontSize: s(28),
               color: cancelado ? 'rgba(255,255,255,0.55)' : theme.accent,
-              marginTop: 6,
+              marginTop: s(6),
               textShadow: '0 2px 6px rgba(0,0,0,0.3)',
               textDecoration: cancelado ? 'line-through' : 'none',
             }}

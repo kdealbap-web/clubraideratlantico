@@ -1,5 +1,4 @@
 import { useSidebar } from '../../lib/sidebar';
-import { ThemePill } from './ThemePill';
 import { IconBell, IconChevronLeft, IconChevronRight, IconSearch } from '../icons';
 
 interface TopbarProps {
@@ -121,8 +120,6 @@ export function Topbar({ section, breadcrumb }: TopbarProps) {
           }}
         />
       </div>
-
-      <ThemePill />
 
       <button
         type="button"
