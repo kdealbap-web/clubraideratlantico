@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { PublicLayout } from '../../components/public/PublicLayout';
@@ -6,7 +6,7 @@ import { ROUTES } from '../../lib/constants';
 import { FieldShell, TextField } from '../../components/forms/Field';
 
 export function LoginPage() {
-  const { signInPassword, resetPassword, user, isAdmin } = useAuth();
+  const { signInPassword, resetPassword, user, member, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +28,13 @@ export function LoginPage() {
     );
   };
 
+  // Piloto (no admin) ya logueado: al portal directo, sin pantalla intermedia.
+  useEffect(() => {
+    if (user && member && !isAdmin) {
+      navigate(ROUTES.portal, { replace: true });
+    }
+  }, [user, member, isAdmin, navigate]);
+
   if (user) {
     return (
       <PublicLayout withSocialLinks={false}>
@@ -43,13 +50,14 @@ export function LoginPage() {
             Hola <strong>{user.email}</strong>. Tu sesión está activa.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => navigate(isAdmin ? ROUTES.admin : ROUTES.portal)}
-              style={primaryBtn}
-            >
-              Ir a {isAdmin ? 'Admin' : 'Portal'} →
+            <button type="button" onClick={() => navigate(ROUTES.portal)} style={primaryBtn}>
+              Portal del piloto →
             </button>
+            {isAdmin ? (
+              <button type="button" onClick={() => navigate(ROUTES.admin)} style={secondaryBtn}>
+                Ir a Admin →
+              </button>
+            ) : null}
             <Link to={ROUTES.home} style={secondaryBtn}>
               Volver al inicio
             </Link>

@@ -205,6 +205,7 @@ function CarnetView() {
 
   return (
     <article
+      className="carnet-card"
       style={{
         background:
           'linear-gradient(135deg, var(--dark-1) 0%, var(--dark-2) 60%, var(--dark-1) 100%)',
@@ -255,7 +256,10 @@ function CarnetView() {
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative' }}>
+      <div
+        className="carnet-info"
+        style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative' }}
+      >
         <div className="kicker">· Carnet · {CLUB.nombre}</div>
         <h2
           className="t-display"
@@ -302,6 +306,18 @@ function CarnetView() {
           ID #{member.id.slice(0, 8)}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 680px) {
+          .carnet-card {
+            grid-template-columns: 1fr !important;
+            justify-items: center;
+            text-align: center;
+            padding: 22px !important;
+          }
+          .carnet-info { align-items: center; }
+        }
+      `}</style>
     </article>
   );
 }

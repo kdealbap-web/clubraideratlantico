@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { CLUB, ROUTES } from '../../lib/constants';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../lib/auth';
 import { Logo } from '../chrome/Logo';
 import { IconClose, IconWhatsApp } from '../icons';
 import type { EventItem } from '../../types';
@@ -21,6 +22,7 @@ export function PublicNav() {
   const [open, setOpen] = useState(false);
   const [nextEvent, setNextEvent] = useState<EventItem | null>(null);
   const loc = useLocation();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     let active = true;
@@ -109,8 +111,25 @@ export function PublicNav() {
           className="public-nav-actions"
           style={{ display: 'flex', alignItems: 'center', gap: 10 }}
         >
+          {isAdmin ? (
+            <Link
+              to={ROUTES.admin}
+              style={{
+                fontFamily: 'var(--font-cond)',
+                fontSize: 12,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: 'var(--rojo)',
+                textDecoration: 'none',
+                padding: '8px 12px',
+                border: '1px solid var(--rojo)',
+              }}
+            >
+              Admin
+            </Link>
+          ) : null}
           <Link
-            to={ROUTES.login}
+            to={ROUTES.portal}
             style={{
               fontFamily: 'var(--font-cond)',
               fontSize: 12,
@@ -268,6 +287,7 @@ function UtilityStrip({ event }: { event: EventItem | null }) {
 }
 
 function MobileMenu({ onClose }: { onClose: () => void }) {
+  const { isAdmin } = useAuth();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -378,8 +398,28 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
         }}
       >
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {isAdmin ? (
+            <Link
+              to={ROUTES.admin}
+              onClick={onClose}
+              style={{
+                flex: 1,
+                fontFamily: 'var(--font-cond)',
+                fontSize: 12,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--rojo)',
+                textAlign: 'center',
+                padding: '14px 18px',
+                border: '1px solid var(--rojo)',
+                textDecoration: 'none',
+              }}
+            >
+              Admin
+            </Link>
+          ) : null}
           <Link
-            to={ROUTES.login}
+            to={ROUTES.portal}
             onClick={onClose}
             style={{
               flex: 1,
