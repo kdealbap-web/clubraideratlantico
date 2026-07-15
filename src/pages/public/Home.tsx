@@ -3,6 +3,7 @@ import { PublicLayout } from '../../components/public/PublicLayout';
 import { Hero } from '../../components/public/Hero';
 import { HomeCronogramaPreview } from '../../components/public/HomeCronogramaPreview';
 import { CLUB, ROUTES } from '../../lib/constants';
+import { CoverImage } from '../../components/ui/CoverImage';
 import { IconBike, IconCalendar, IconImage, IconNews, IconRoute, IconUsers } from '../../components/icons';
 
 export function HomePage() {
@@ -24,6 +25,7 @@ export function HomePage() {
           { value: '18+', label: 'Solo mayores' },
           { value: 'Caribe', label: 'Región' },
         ]}
+        bgImage="/home-hero-moto.jpg"
       />
 
       <HomeCronogramaPreview />
@@ -106,22 +108,12 @@ export function HomePage() {
             </div>
           </div>
 
-          <div
-            style={{
-              background: 'linear-gradient(135deg, var(--imgph-1), var(--imgph-2))',
-              border: '1px solid var(--borde)',
-              minHeight: 320,
-              display: 'grid',
-              placeItems: 'center',
-              color: 'var(--muted)',
-              fontFamily: 'var(--font-cond)',
-              fontSize: 11,
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-            }}
-          >
-            ‹imagen pendiente›
-          </div>
+          <CoverImage
+            url="/home-mision-moto.jpg"
+            alt="Piloto del Club Raider Atlántico rodando en la vía"
+            minHeight={320}
+            style={{ border: '1px solid var(--borde)' }}
+          />
         </div>
       </section>
 
@@ -149,13 +141,32 @@ export function HomePage() {
 
       <section
         style={{
+          position: 'relative',
+          overflow: 'hidden',
           padding: '80px 32px',
-          background:
-            'linear-gradient(180deg, var(--negro) 0%, var(--dark-1) 100%)',
+          background: 'linear-gradient(180deg, var(--negro) 0%, var(--dark-1) 100%)',
           borderTop: '1px solid var(--borde)',
         }}
       >
-        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: "url('/home-grupo.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 30%',
+          }}
+        />
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.72) 100%)',
+          }}
+        />
+        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <div className="kicker">· Sin costo · sin SLA</div>
           <h2
             className="t-display"
@@ -168,23 +179,43 @@ export function HomePage() {
             Llena el formulario, el comité revisa tu solicitud y te avisamos. No hay prisa ni filtros
             secretos: respeto, mayoría de edad y ganas de rodar bien.
           </p>
-          <Link
-            to={ROUTES.unete}
-            style={{
-              display: 'inline-block',
-              fontFamily: 'var(--font-cond)',
-              fontSize: 14,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: 'var(--blanco)',
-              background: 'var(--rojo)',
-              padding: '14px 24px',
-              textDecoration: 'none',
-              clipPath: 'var(--clip-btn-l)',
-            }}
-          >
-            Solicita tu ingreso →
-          </Link>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link
+              to={ROUTES.unete}
+              style={{
+                display: 'inline-block',
+                fontFamily: 'var(--font-cond)',
+                fontSize: 14,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--blanco)',
+                background: 'var(--rojo)',
+                padding: '14px 24px',
+                textDecoration: 'none',
+                clipPath: 'var(--clip-btn-l)',
+              }}
+            >
+              Solicita tu ingreso →
+            </Link>
+            <Link
+              to={ROUTES.login}
+              style={{
+                display: 'inline-block',
+                fontFamily: 'var(--font-cond)',
+                fontSize: 14,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: 'var(--blanco)',
+                background: 'transparent',
+                border: '1px solid var(--borde-strong)',
+                padding: '14px 24px',
+                textDecoration: 'none',
+                clipPath: 'var(--clip-btn-l)',
+              }}
+            >
+              Portal del piloto →
+            </Link>
+          </div>
           <div style={{ marginTop: 16, color: 'var(--muted)', fontSize: 12 }}>
             {CLUB.emails.info}
           </div>

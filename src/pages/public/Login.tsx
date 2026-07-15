@@ -2,16 +2,31 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { PublicLayout } from '../../components/public/PublicLayout';
-import { CLUB, ROUTES } from '../../lib/constants';
+import { ROUTES } from '../../lib/constants';
 import { FieldShell, TextField } from '../../components/forms/Field';
 
 export function LoginPage() {
-  const { signInPassword, user, isAdmin } = useAuth();
+  const { signInPassword, resetPassword, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+
+  const sendReset = async () => {
+    if (!email) {
+      setResetMsg('Escribe tu email arriba y vuelve a tocar aquí.');
+      return;
+    }
+    setResetMsg('Enviando…');
+    const { error } = await resetPassword(email);
+    setResetMsg(
+      error
+        ? `No se pudo enviar: ${error}`
+        : 'Listo. Te enviamos un enlace a tu correo para crear una nueva contraseña.',
+    );
+  };
 
   if (user) {
     return (
@@ -134,14 +149,38 @@ export function LoginPage() {
           </Link>
         </div>
 
-        <div style={{ marginTop: 24, color: 'var(--muted)', fontSize: 12, lineHeight: 1.6 }}>
-          ¿No tienes cuenta? <Link to={ROUTES.unete} style={{ color: 'var(--rojo)' }}>Solicita tu ingreso</Link>.
-          <br />
-          ¿Olvidaste tu contraseña? Escríbele al admin a{' '}
-          <a href={`mailto:${CLUB.emails.admin}`} style={{ color: 'var(--rojo)' }}>
-            {CLUB.emails.admin}
-          </a>{' '}
-          para que la resetee.
+        <div style={{ marginTop: 20 }}>
+          <button
+            type="button"
+            onClick={() => void sendReset()}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              color: 'var(--rojo)',
+              fontFamily: 'var(--font-cond)',
+              fontSize: 12,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+            }}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+          {resetMsg ? (
+            <p style={{ color: 'var(--light)', fontSize: 12.5, marginTop: 8, lineHeight: 1.5 }}>
+              {resetMsg}
+            </p>
+          ) : null}
+        </div>
+
+        <div style={{ marginTop: 20, color: 'var(--muted)', fontSize: 12, lineHeight: 1.6 }}>
+          ¿No tienes cuenta?{' '}
+          <Link to={ROUTES.unete} style={{ color: 'var(--rojo)' }}>
+            Solicita tu ingreso
+          </Link>
+          .
         </div>
       </section>
     </PublicLayout>

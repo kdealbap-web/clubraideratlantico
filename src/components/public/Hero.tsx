@@ -5,9 +5,11 @@ interface HeroProps {
   title: ReactNode;
   subtitle?: string;
   meta?: Array<{ label: string; value: string }>;
+  /** Foto de fondo opcional (con overlay para legibilidad del texto). */
+  bgImage?: string;
 }
 
-export function Hero({ kicker, title, subtitle, meta }: HeroProps) {
+export function Hero({ kicker, title, subtitle, meta, bgImage }: HeroProps) {
   return (
     <section
       style={{
@@ -19,7 +21,30 @@ export function Hero({ kicker, title, subtitle, meta }: HeroProps) {
         borderBottom: '1px solid var(--borde)',
       }}
     >
-      <div style={{ maxWidth: 1320, margin: '0 auto' }}>
+      {bgImage ? (
+        <>
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url('${bgImage}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center right',
+            }}
+          />
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'linear-gradient(90deg, rgba(10,10,10,0.94) 0%, rgba(10,10,10,0.8) 42%, rgba(10,10,10,0.5) 100%), linear-gradient(180deg, transparent 40%, rgba(10,10,10,0.85) 100%)',
+            }}
+          />
+        </>
+      ) : null}
+      <div style={{ maxWidth: 1320, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div className="kicker" style={{ marginBottom: 14 }}>
           · {kicker}
         </div>

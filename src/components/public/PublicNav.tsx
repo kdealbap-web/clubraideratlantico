@@ -122,7 +122,7 @@ export function PublicNav() {
               border: '1px solid var(--borde)',
             }}
           >
-            Acceso miembros
+            Portal piloto
           </Link>
           <Link
             to={ROUTES.unete}
@@ -394,7 +394,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
               textDecoration: 'none',
             }}
           >
-            Acceso miembros
+            Portal piloto
           </Link>
           <Link
             to={ROUTES.unete}

@@ -11,6 +11,8 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "seed:passwords": "node scripts/seed-passwords.mjs",
+    "create:pilots": "node scripts/create-pilot-users.mjs",
+    "create:pilots:dry": "node scripts/create-pilot-users.mjs --dry-run",
     "import:csv": "node scripts/import-csv.mjs",
     "import:csv:dry": "node scripts/import-csv.mjs --dry-run",
     "import:asistencias": "node scripts/import-asistencias.mjs",

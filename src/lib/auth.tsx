@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { ROUTES } from './constants';
 import type { Member, Rol } from '../types';
 
 interface AuthCtx {
@@ -18,6 +19,8 @@ interface AuthCtx {
   member: Member | null;
   signInPassword: (email: string, password: string) => Promise<{ error: string | null }>;
   signUpPassword: (email: string, password: string) => Promise<{ error: string | null }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isEditor: boolean;
@@ -93,6 +96,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const resetPassword = useCallback(
+    async (email: string): Promise<{ error: string | null }> => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}${ROUTES.resetPassword}`,
+      });
+      return { error: error?.message ?? null };
+    },
+    [],
+  );
+
+  const updatePassword = useCallback(
+    async (password: string): Promise<{ error: string | null }> => {
+      const { error } = await supabase.auth.updateUser({ password });
+      return { error: error?.message ?? null };
+    },
+    [],
+  );
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setMember(null);
@@ -107,11 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       member,
       signInPassword,
       signUpPassword,
+      resetPassword,
+      updatePassword,
       signOut,
       isAdmin: rol ? ADMIN_ROLES.includes(rol) && member.estado === 'activo' : false,
       isEditor: rol ? EDITOR_ROLES.includes(rol) && member.estado === 'activo' : false,
     };
-  }, [loading, session, member, signInPassword, signUpPassword, signOut]);
+  }, [loading, session, member, signInPassword, signUpPassword, resetPassword, updatePassword, signOut]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

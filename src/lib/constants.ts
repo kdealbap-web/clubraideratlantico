@@ -52,6 +52,7 @@ export const ROUTES = {
   unete: '/unete',
   login: '/login',
   signup: '/signup',
+  resetPassword: '/restablecer',
   cronograma: '/cronograma',
   admin: '/admin',
   adminMiembros: '/admin/miembros',
