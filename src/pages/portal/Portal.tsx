@@ -213,7 +213,9 @@ function CarnetView() {
   // El QR codifica la cédula del piloto (compatible con el sistema anterior de
   // asistencia, donde el código escaneado es la cédula).
   const qrPayload = (member.cedula ?? '').replace(/\D/g, '') || member.id;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&bgcolor=0a0a0a&color=cc2222&data=${encodeURIComponent(
+  // QR negro sobre blanco con quiet zone: máximo contraste para que otros
+  // celulares lo escaneen sin problema (el rojo/negro anterior no se leía).
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&qzone=2&bgcolor=ffffff&color=000000&data=${encodeURIComponent(
     qrPayload,
   )}`;
 
@@ -542,29 +544,76 @@ function AsistenciaView({ memberId }: { memberId: string }) {
 }
 
 function RodadasView() {
+  const { member } = useAuth();
   const [events, setEvents] = useState<EventItem[] | null>(null);
+  const [inscritos, setInscritos] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!member) return;
     let active = true;
     (async () => {
-      const { data, error: e } = await supabase
-        .from('events')
-        .select('*')
-        .eq('estado', 'publicado')
-        .order('fecha', { ascending: true });
+      const today = new Date().toISOString().slice(0, 10);
+      const [evsRes, insRes] = await Promise.all([
+        supabase
+          .from('events')
+          .select('*')
+          .eq('estado', 'publicado')
+          .gte('fecha', today)
+          .order('fecha', { ascending: true }),
+        supabase.from('inscripciones').select('event_id').eq('member_id', member.id),
+      ]);
       if (!active) return;
-      if (e) {
-        setError(e.message);
+      if (evsRes.error) {
+        setError(evsRes.error.message);
         setEvents([]);
-      } else {
-        setEvents((data ?? []) as EventItem[]);
+        return;
       }
+      setEvents((evsRes.data ?? []) as EventItem[]);
+      setInscritos(
+        new Set(((insRes.data ?? []) as { event_id: string }[]).map((r) => r.event_id)),
+      );
     })();
     return () => {
       active = false;
     };
-  }, []);
+  }, [member]);
+
+  const toggle = async (eventId: string) => {
+    if (!member) return;
+    setBusy(eventId);
+    setError(null);
+    try {
+      if (inscritos.has(eventId)) {
+        const { error: e } = await supabase
+          .from('inscripciones')
+          .delete()
+          .eq('member_id', member.id)
+          .eq('event_id', eventId);
+        if (e) {
+          setError(e.message);
+          return;
+        }
+        setInscritos((prev) => {
+          const n = new Set(prev);
+          n.delete(eventId);
+          return n;
+        });
+      } else {
+        const { error: e } = await supabase
+          .from('inscripciones')
+          .insert({ member_id: member.id, event_id: eventId });
+        if (e && e.code !== '23505') {
+          setError(e.message);
+          return;
+        }
+        setInscritos((prev) => new Set(prev).add(eventId));
+      }
+    } finally {
+      setBusy(null);
+    }
+  };
 
   if (error) {
     return (
@@ -589,64 +638,74 @@ function RodadasView() {
     return (
       <EmptyState
         icon={<IconCalendar size={24} />}
-        title="Aún no hay rodadas publicadas"
-        body="Cuando el comité publique la próxima rodada, aparecerá acá con cupos y briefing."
+        title="Aún no hay rodadas próximas"
+        body="Cuando el comité publique la próxima rodada, aparecerá acá para que te inscribas."
       />
     );
   }
 
+  const totalInscrito = events.filter((e) => inscritos.has(e.id)).length;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {events.map((ev) => (
-        <article
-          key={ev.id}
-          style={{
-            background: 'var(--dark-1)',
-            border: '1px solid var(--borde)',
-            padding: '18px 20px',
-            display: 'grid',
-            gridTemplateColumns: '90px 1fr auto',
-            gap: 16,
-            alignItems: 'center',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span
-              className="t-display"
-              style={{ fontSize: 32, color: 'var(--rojo)', lineHeight: 1 }}
-            >
-              {ev.fecha.slice(8, 10)}
-            </span>
-            <span className="t-cond-up" style={{ fontSize: 11, color: 'var(--light)' }}>
-              {ev.hora}
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <strong style={{ fontSize: 18, color: 'var(--blanco)' }}>{ev.titulo}</strong>
-            <span style={{ color: 'var(--muted)', fontSize: 13 }}>
-              {ev.salida} · {ev.dificultad} {ev.km ? `· ${ev.km} km` : ''}
-            </span>
-          </div>
-          <button
-            type="button"
+      <p style={{ color: 'var(--light)', fontSize: 13.5, margin: '0 0 4px' }}>
+        Inscríbete a las próximas rodadas. Estás inscrito en{' '}
+        <strong style={{ color: 'var(--rojo)' }}>{totalInscrito}</strong>. Tus asistencias
+        registradas están en la pestaña <strong>Mi asistencia</strong>.
+      </p>
+      {events.map((ev) => {
+        const yo = inscritos.has(ev.id);
+        return (
+          <article
+            key={ev.id}
             style={{
-              fontFamily: 'var(--font-cond)',
-              fontSize: 11,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: 'var(--blanco)',
-              background: 'var(--rojo)',
-              border: 'none',
-              padding: '10px 14px',
-              cursor: 'pointer',
-              clipPath: 'var(--clip-btn)',
+              background: 'var(--dark-1)',
+              border: `1px solid ${yo ? 'var(--success)' : 'var(--borde)'}`,
+              padding: '18px 20px',
+              display: 'grid',
+              gridTemplateColumns: '90px 1fr auto',
+              gap: 16,
+              alignItems: 'center',
             }}
-            onClick={() => alert('Inscripciones a rodadas se entregan en hito 8 v2.')}
           >
-            Inscribirme
-          </button>
-        </article>
-      ))}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span className="t-display" style={{ fontSize: 32, color: 'var(--rojo)', lineHeight: 1 }}>
+                {ev.fecha.slice(8, 10)}
+              </span>
+              <span className="t-cond-up" style={{ fontSize: 11, color: 'var(--light)' }}>
+                {ev.hora}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <strong style={{ fontSize: 18, color: 'var(--blanco)' }}>{ev.titulo}</strong>
+              <span style={{ color: 'var(--muted)', fontSize: 13 }}>
+                {ev.salida} · {ev.dificultad} {ev.km ? `· ${ev.km} km` : ''}
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={busy === ev.id}
+              onClick={() => void toggle(ev.id)}
+              title={yo ? 'Toca para cancelar tu inscripción' : 'Inscribirme a esta rodada'}
+              style={{
+                fontFamily: 'var(--font-cond)',
+                fontSize: 11,
+                letterSpacing: '0.14em',
+                textTransform: 'uppercase',
+                color: yo ? 'var(--success)' : 'var(--blanco)',
+                background: yo ? 'transparent' : 'var(--rojo)',
+                border: yo ? '1px solid var(--success)' : 'none',
+                padding: '10px 14px',
+                cursor: 'pointer',
+                clipPath: yo ? undefined : 'var(--clip-btn)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {busy === ev.id ? '…' : yo ? '✓ Inscrito' : 'Inscribirme'}
+            </button>
+          </article>
+        );
+      })}
     </div>
   );
 }
