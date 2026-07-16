@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Html5Qrcode as QrScanner } from 'html5-qrcode';
+import type { Html5QrcodeScanner as ScannerType } from 'html5-qrcode';
 import { supabase } from '../../lib/supabase';
 import { Btn } from '../admin/Buttons';
 import type { EventItem } from '../../types';
@@ -23,44 +23,27 @@ function extractCedula(text: string): string | null {
 }
 
 export function AsistenciaScanner({ event, registradoPor, onRegistered }: Props) {
-  const [scanning, setScanning] = useState(false);
+  const [active, setActive] = useState(false);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [count, setCount] = useState(0);
-  const scannerRef = useRef<QrScanner | null>(null);
+  const [lastScan, setLastScan] = useState<string | null>(null);
+
+  const scannerRef = useRef<ScannerType | null>(null);
   const lastRef = useRef<{ code: string; t: number }>({ code: '', t: 0 });
   const busyRef = useRef(false);
-
-  const stop = async () => {
-    const s = scannerRef.current;
-    scannerRef.current = null;
-    if (s) {
-      try {
-        await s.stop();
-        s.clear();
-      } catch {
-        /* la cámara ya estaba detenida */
-      }
-    }
-    setScanning(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      void stop();
-    };
-  }, []);
 
   const handleDecoded = async (text: string) => {
     const now = Date.now();
     if (busyRef.current) return;
-    // Ignora el mismo QR repetido (html5-qrcode dispara en cada frame).
+    // ignora el mismo QR repetido (el escáner dispara varias veces por segundo)
     if (lastRef.current.code === text && now - lastRef.current.t < 3500) return;
     lastRef.current = { code: text, t: now };
     busyRef.current = true;
+    setLastScan(text);
     try {
       const cedula = extractCedula(text);
       if (!cedula) {
-        setFeedback({ kind: 'error', msg: 'QR no válido' });
+        setFeedback({ kind: 'error', msg: `QR leído pero no parece una cédula: "${text}"` });
         return;
       }
       const { data: m } = await supabase
@@ -95,35 +78,84 @@ export function AsistenciaScanner({ event, registradoPor, onRegistered }: Props)
       setCount((c) => c + 1);
       onRegistered?.();
     } finally {
+      // pequeño respiro para no doble-registrar
       setTimeout(() => {
         busyRef.current = false;
       }, 1500);
     }
   };
 
-  const start = async () => {
+  // Mantiene el handler más reciente sin re-crear el escáner.
+  const handlerRef = useRef(handleDecoded);
+  handlerRef.current = handleDecoded;
+
+  // Monta/desmonta el escáner cuando `active` cambia.
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    let scanner: ScannerType | null = null;
+
+    (async () => {
+      try {
+        const mod = await import('html5-qrcode');
+        if (cancelled) return;
+        scanner = new mod.Html5QrcodeScanner(
+          SCANNER_ID,
+          {
+            fps: 10,
+            // qrbox adaptable al tamaño real del video (evita el "qrbox > video" en móviles)
+            qrbox: (w: number, h: number) => {
+              const size = Math.floor(Math.min(w, h) * 0.7);
+              return { width: size, height: size };
+            },
+            rememberLastUsedCamera: true,
+            aspectRatio: 1.0,
+            showTorchButtonIfSupported: true,
+            supportedScanTypes: [mod.Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          },
+          false,
+        );
+        scannerRef.current = scanner;
+        scanner.render(
+          (decoded: string) => {
+            void handlerRef.current(decoded);
+          },
+          () => {
+            /* error por frame (QR no encontrado): se ignora */
+          },
+        );
+      } catch (e) {
+        setFeedback({
+          kind: 'error',
+          msg: e instanceof Error ? e.message : 'No se pudo iniciar el escáner.',
+        });
+        setActive(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      const s = scanner ?? scannerRef.current;
+      scannerRef.current = null;
+      if (s) void s.clear().catch(() => undefined);
+    };
+  }, [active]);
+
+  const start = () => {
     setFeedback(null);
-    try {
-      const { Html5Qrcode } = await import('html5-qrcode');
-      const scanner = new Html5Qrcode(SCANNER_ID);
-      scannerRef.current = scanner;
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decoded) => {
-          void handleDecoded(decoded);
-        },
-        () => {
-          /* error de decodificación por frame: se ignora */
-        },
-      );
-      setScanning(true);
-    } catch (e) {
+    setLastScan(null);
+    if (!window.isSecureContext) {
       setFeedback({
         kind: 'error',
-        msg: e instanceof Error ? e.message : 'No se pudo abrir la cámara. Da permiso de cámara.',
+        msg: 'La cámara solo funciona en HTTPS. Abre el sitio con https:// (o localhost).',
       });
+      return;
     }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setFeedback({ kind: 'error', msg: 'Este navegador no soporta cámara. Prueba con Chrome actualizado.' });
+      return;
+    }
+    setActive(true);
   };
 
   const fbColor =
@@ -141,17 +173,24 @@ export function AsistenciaScanner({ event, registradoPor, onRegistered }: Props)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center' }}>
-      <div
-        id={SCANNER_ID}
-        style={{
-          width: '100%',
-          maxWidth: 380,
-          minHeight: scanning ? 280 : 0,
-          background: 'var(--negro)',
-          border: scanning ? '1px solid var(--rojo)' : '1px dashed var(--borde)',
-          overflow: 'hidden',
-        }}
-      />
+      {!active ? (
+        <>
+          <p style={{ color: 'var(--light)', fontSize: 13.5, textAlign: 'center', maxWidth: 380, lineHeight: 1.5 }}>
+            Toca <strong>Iniciar escáner</strong> y permite el acceso a la cámara. Apunta al QR del
+            carnet del piloto (pantalla del portal).
+          </p>
+          <Btn type="button" onClick={start}>
+            Iniciar escáner
+          </Btn>
+        </>
+      ) : (
+        <>
+          <div id={SCANNER_ID} style={{ width: '100%', maxWidth: 360 }} />
+          <Btn variant="ghost" type="button" onClick={() => setActive(false)}>
+            Detener cámara
+          </Btn>
+        </>
+      )}
 
       {feedback ? (
         <div
@@ -159,14 +198,14 @@ export function AsistenciaScanner({ event, registradoPor, onRegistered }: Props)
           aria-live="polite"
           style={{
             width: '100%',
-            maxWidth: 380,
+            maxWidth: 360,
             border: `1px solid ${fbColor}`,
             background: fbBg,
             color: fbColor,
             padding: '12px 14px',
             fontFamily: 'var(--font-cond)',
             fontSize: 14,
-            letterSpacing: '0.04em',
+            letterSpacing: '0.03em',
             textAlign: 'center',
           }}
         >
@@ -174,20 +213,34 @@ export function AsistenciaScanner({ event, registradoPor, onRegistered }: Props)
         </div>
       ) : null}
 
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        {scanning ? (
-          <Btn variant="ghost" type="button" onClick={() => void stop()}>
-            Detener cámara
-          </Btn>
-        ) : (
-          <Btn type="button" onClick={() => void start()}>
-            Abrir cámara
-          </Btn>
-        )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
         <span style={{ color: 'var(--muted)', fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>
-          Registrados: <strong style={{ color: 'var(--success)' }}>{count}</strong>
+          Registrados en esta sesión: <strong style={{ color: 'var(--success)' }}>{count}</strong>
         </span>
+        {lastScan ? (
+          <span style={{ color: 'var(--muted)', fontSize: 11 }}>
+            Último QR leído: <code style={{ color: 'var(--light)' }}>{lastScan}</code>
+          </span>
+        ) : null}
       </div>
+
+      {/* Estiliza el widget de html5-qrcode para el tema oscuro */}
+      <style>{`
+        #${SCANNER_ID} { color: var(--blanco); font-family: var(--font-body); }
+        #${SCANNER_ID} video { border-radius: 4px; }
+        #${SCANNER_ID} button {
+          font-family: var(--font-cond); letter-spacing: 0.06em; text-transform: uppercase;
+          background: var(--rojo); color: #fff; border: none; padding: 10px 16px;
+          cursor: pointer; font-size: 13px; margin: 4px 0;
+        }
+        #${SCANNER_ID} select {
+          background: var(--dark-2); color: var(--blanco); border: 1px solid var(--borde);
+          padding: 8px; font-size: 13px; border-radius: 3px;
+        }
+        #${SCANNER_ID} a { color: var(--rojo); }
+        #${SCANNER_ID} span, #${SCANNER_ID} div { color: var(--light); }
+        #${SCANNER_ID}__dashboard_section_csr span { color: var(--light); }
+      `}</style>
     </div>
   );
 }
