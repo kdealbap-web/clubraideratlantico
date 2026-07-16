@@ -839,8 +839,13 @@ function EventDrawer({ event, onClose }: { event: EventItem | null; onClose: () 
     }
   };
 
-  const inscripcionWa = event.contacto_tel
-    ? `https://wa.me/${event.contacto_tel.replace(/\D/g, '')}?text=${encodeURIComponent(
+  // Normaliza el número para wa.me: los móviles colombianos locales (10 dígitos
+  // que empiezan por 3) necesitan el indicativo 57, si no WhatsApp da "número no válido".
+  const telDigits = event.contacto_tel ? event.contacto_tel.replace(/\D/g, '') : '';
+  const telWa =
+    telDigits.length === 10 && telDigits.startsWith('3') ? `57${telDigits}` : telDigits;
+  const inscripcionWa = telWa
+    ? `https://wa.me/${telWa}?text=${encodeURIComponent(
         `Hola, quiero inscribirme en "${event.titulo}" del ${fmtFecha(event.fecha)}.`,
       )}`
     : CLUB.social.whatsapp.url;

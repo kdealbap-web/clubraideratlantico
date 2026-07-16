@@ -122,6 +122,7 @@ export function Sidebar() {
           borderTop: '1px solid var(--borde)',
           padding: collapsed ? '12px 0' : 14,
           display: 'flex',
+          flexDirection: collapsed ? 'column' : 'row',
           alignItems: 'center',
           gap: 10,
           justifyContent: collapsed ? 'center' : 'flex-start',
@@ -145,7 +146,28 @@ export function Sidebar() {
         >
           {initials}
         </div>
-        {collapsed ? null : (
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={() => {
+              void signOut();
+            }}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+            style={{
+              width: 32,
+              height: 32,
+              background: 'var(--dark-2)',
+              color: 'var(--light)',
+              border: '1px solid var(--borde)',
+              cursor: 'pointer',
+              display: 'grid',
+              placeItems: 'center',
+            }}
+          >
+            <IconLogout size={14} />
+          </button>
+        ) : (
           <>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
               <span

@@ -1,5 +1,10 @@
+import { Link } from 'react-router-dom';
 import { useSidebar } from '../../lib/sidebar';
-import { IconBell, IconChevronLeft, IconChevronRight, IconSearch } from '../icons';
+import { useAuth } from '../../lib/auth';
+import { useTable } from '../../lib/useTable';
+import { ROUTES } from '../../lib/constants';
+import { IconBell, IconChevronLeft, IconChevronRight, IconLogout, IconSearch } from '../icons';
+import type { Solicitud } from '../../types';
 
 interface TopbarProps {
   section: string;
@@ -8,6 +13,13 @@ interface TopbarProps {
 
 export function Topbar({ section, breadcrumb }: TopbarProps) {
   const { collapsed, toggle } = useSidebar();
+  const { signOut } = useAuth();
+  const { rows: pendientes } = useTable<Solicitud>('solicitudes', {
+    filter: [{ column: 'estado', op: 'eq', value: 'pendiente' }],
+    order: { column: 'created_at', ascending: false },
+  });
+  const pendingCount = pendientes?.length ?? 0;
+
   return (
     <header
       style={{
@@ -37,20 +49,13 @@ export function Topbar({ section, breadcrumb }: TopbarProps) {
           cursor: 'pointer',
           display: 'grid',
           placeItems: 'center',
+          flexShrink: 0,
         }}
       >
         {collapsed ? <IconChevronRight size={12} /> : <IconChevronLeft size={12} />}
       </button>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          minWidth: 0,
-          flex: 1,
-        }}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
         <span
           style={{
             fontFamily: 'var(--font-cond)',
@@ -121,34 +126,74 @@ export function Topbar({ section, breadcrumb }: TopbarProps) {
         />
       </div>
 
-      <button
-        type="button"
-        title="Notificaciones"
+      {/* Notificaciones: solicitudes de miembro pendientes */}
+      <Link
+        to={`${ROUTES.adminMiembros}?tab=solicitudes`}
+        title={
+          pendingCount > 0
+            ? `${pendingCount} solicitud(es) de miembro pendientes`
+            : 'Sin solicitudes pendientes'
+        }
         aria-label="Notificaciones"
         style={{
           width: 36,
           height: 36,
           position: 'relative',
           background: 'var(--dark-2)',
+          color: pendingCount > 0 ? 'var(--rojo-light)' : 'var(--blanco)',
+          border: `1px solid ${pendingCount > 0 ? 'var(--rojo)' : 'var(--borde)'}`,
+          cursor: 'pointer',
+          display: 'grid',
+          placeItems: 'center',
+          flexShrink: 0,
+          textDecoration: 'none',
+        }}
+      >
+        <IconBell size={14} />
+        {pendingCount > 0 ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: -7,
+              right: -7,
+              minWidth: 18,
+              height: 18,
+              padding: '0 4px',
+              background: 'var(--rojo)',
+              color: 'var(--blanco)',
+              borderRadius: 9,
+              fontSize: 10,
+              fontWeight: 700,
+              fontFamily: 'var(--font-cond)',
+              display: 'grid',
+              placeItems: 'center',
+              border: '2px solid var(--dark-1)',
+            }}
+          >
+            {pendingCount > 9 ? '9+' : pendingCount}
+          </span>
+        ) : null}
+      </Link>
+
+      {/* Cerrar sesión */}
+      <button
+        type="button"
+        onClick={() => void signOut()}
+        title="Cerrar sesión"
+        aria-label="Cerrar sesión"
+        style={{
+          width: 36,
+          height: 36,
+          background: 'var(--dark-2)',
           color: 'var(--blanco)',
           border: '1px solid var(--borde)',
           cursor: 'pointer',
           display: 'grid',
           placeItems: 'center',
+          flexShrink: 0,
         }}
       >
-        <IconBell size={14} />
-        <span
-          style={{
-            position: 'absolute',
-            top: 6,
-            right: 6,
-            width: 6,
-            height: 6,
-            background: 'var(--rojo)',
-            borderRadius: '50%',
-          }}
-        />
+        <IconLogout size={14} />
       </button>
     </header>
   );

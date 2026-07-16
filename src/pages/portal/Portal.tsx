@@ -81,21 +81,35 @@ export function PortalPage() {
       <PublicNav />
 
       <main style={{ flex: 1, padding: '32px 24px', maxWidth: 1100, width: '100%', margin: '0 auto' }}>
-        <header style={{ marginBottom: 24 }}>
-          <div className="kicker">· Portal del piloto</div>
-          <h1
-            className="t-display"
-            style={{
-              fontSize: 'clamp(40px, 6vw, 64px)',
-              margin: '8px 0 0',
-              color: 'var(--blanco)',
-            }}
-          >
-            Hola, <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>{member.nombre}</span>.
-          </h1>
-          <p style={{ color: 'var(--light)', marginTop: 8 }}>
-            {ROL_LABELS[member.rol]} · {member.ciudad} · Estado: {member.estado}
-          </p>
+        <header
+          style={{
+            marginBottom: 24,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 16,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <div className="kicker">· Portal del piloto</div>
+            <h1
+              className="t-display"
+              style={{
+                fontSize: 'clamp(40px, 6vw, 64px)',
+                margin: '8px 0 0',
+                color: 'var(--blanco)',
+              }}
+            >
+              Hola, <span style={{ color: 'var(--rojo)', fontStyle: 'italic' }}>{member.nombre}</span>.
+            </h1>
+            <p style={{ color: 'var(--light)', marginTop: 8 }}>
+              {ROL_LABELS[member.rol]} · {member.ciudad} · Estado: {member.estado}
+            </p>
+          </div>
+          <Btn variant="ghost" onClick={() => void signOut()}>
+            Cerrar sesión
+          </Btn>
         </header>
 
         <nav
